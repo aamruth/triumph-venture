@@ -15,11 +15,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# http://127.0.0.1:8000/predict?market=Legal&days=89
+# http://127.0.0.1:8000/predict?funding_rounds=1&time_between_first_last_funding=89&days_in_business=300&country_usa=true
 @app.get("/predict")
 def predict(
-        market: str,
-        days: int
+        funding_rounds: int,
+        time_between_first_last_funding: int,
+        days_in_business: int,
+        country_usa: bool,
     ):
     """
     Make a single course prediction.
