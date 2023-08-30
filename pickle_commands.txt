@@ -10,3 +10,5 @@ import os
 workflow_dir = os.path.dirname(os.path.abspath(os.getcwd()))
 my_pickle_file = os.path.join(workflow_dir,'data-tuning-pipeline','pipeline.pkl')
 my_pipeline = pickle.load(open("my_pickle_file","rb"))
+#access the estimator example
+#my_pipeline.best_estimator_.score(X,y)
