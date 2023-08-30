@@ -6,4 +6,7 @@ with open("pipeline.pkl", "wb") as file:
     pickle.dump(search, file)
 
 # Load Pipeline from pickle file in another notebook
-my_pipeline = pickle.load(open("pipeline.pkl","rb"))
+import os
+workflow_dir = os.path.dirname(os.path.abspath(os.getcwd()))
+my_pickle_file = os.path.join(workflow_dir,'data-tuning-pipeline','pipeline.pkl')
+my_pipeline = pickle.load(open("my_pickle_file","rb"))
