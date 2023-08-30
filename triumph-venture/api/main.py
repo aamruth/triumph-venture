@@ -24,7 +24,6 @@ def predict(
         country_usa: bool,
     ):
     """
-    test
     Make a single course prediction.
     """
 
