@@ -71,3 +71,11 @@ mkdir tmp
 cd tmp
 Project_1307-run
 ```
+
+
+### Run Docker locally
+
+```
+docker build --tag=triumph-venture:dev .
+docker run -it -e PORT=8000 -p 8000:8000 triumph-venture:dev
+```
