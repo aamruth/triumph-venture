@@ -1,0 +1,9 @@
+# YOUR CODE HERE
+import pickle
+
+# Export Pipeline as pickle file
+with open("pipeline.pkl", "wb") as file:
+    pickle.dump(search, file)
+
+# Load Pipeline from pickle file in another notebook
+my_pipeline = pickle.load(open("pipeline.pkl","rb"))
