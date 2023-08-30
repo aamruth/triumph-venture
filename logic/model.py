@@ -1,108 +1,81 @@
+y = encoded_data["Success_failure"]
+X = encoded_data.drop(columns=["Success_failure"])
+from sklearn.model_selection import train_test_split
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Create a Random Forest classifier as the base model
+base_model = RandomForestClassifier(random_state=42)
+
+# Train the model on the training data
+base_model.fit(X_train, y_train)
+
+
+# Make predictions on the testing data
+y_pred = base_model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
 import numpy as np
-import time
+from sklearn.model_selection import cross_validate
+from sklearn.inspection import permutation_importance
+from sklearn.linear_model import LogisticRegression
 
-from colorama import Fore, Style
-from typing import Tuple
+model = RandomForestClassifier(random_state=42)
 
-# Timing the TF import
-print(Fore.BLUE + "\nLoading TensorFlow..." + Style.RESET_ALL)
-start = time.perf_counter()
+cv_results = cross_validate(model, X_train, y_train, cv = 5)
 
-from tensorflow import keras
-from keras import Model, Sequential, layers, regularizers, optimizers
-from keras.callbacks import EarlyStopping
+score = cv_results["test_score"].mean()
+print(f"Before any feature permutation, the cross-validated accuracy is equal to {round(score,2)}")
 
-end = time.perf_counter()
-print(f"\n✅ TensorFlow loaded ({round(end - start, 2)}s)")
+## Question 1 - Permutation importance
+model = LogisticRegression().fit(X_train,y_train) # Fit the model
 
+permutation_score = permutation_importance(model, X_train, y_train, n_repeats=100) # Perform Permutation
 
+importance_df = pd.DataFrame(np.vstack((X_train.columns,
+                                        permutation_score.importances_mean)).T, # Unstack results
+                            columns = ['feature','feature_importance'])
 
-def initialize_model(input_shape: tuple) -> Model:
-    """
-    Initialize the Neural Network with random weights
-    """
-    reg = regularizers.l1_l2(l2=0.005)
+print("After feature permutation, here are the decreases in terms of scores:")
+importance_df = importance_df.sort_values(by="feature_importance", ascending = False) # Order by importance
+importance_df
 
-    model = Sequential()
+# I want to get rid of features which caused less than this  in terms of performance
+threshold = 0.01
 
-    print("✅ Model initialized")
+# Decompose this one-liner piece of code step by step if you don't understand it at first sight!
+weak_features = importance_df[importance_df.feature_importance <= threshold]["feature"].values
+weak_features
 
-    return model
+from sklearn.model_selection import cross_val_score
 
+## Question 3 - Cross validating the model with strong features only
+X_strong_features = X_train.drop(columns=list(weak_features))
 
-def compile_model(model: Model, learning_rate=0.0005) -> Model:
-    """
-    Compile the Neural Network
-    """
-    optimizer = optimizers.Adam(learning_rate=learning_rate)
-    model.compile(loss="mean_squared_error", optimizer=optimizer, metrics=["mae"])
+print(f"Our strong features are {list(X_strong_features.columns)}")
 
-    print("✅ Model compiled")
+model = RandomForestClassifier(random_state=42)
 
-    return model
+scores = cross_val_score(model, X_strong_features, y_train, cv = 5)
+strong_model_score = scores.mean()
 
-def train_model(
-        model: Model,
-        X: np.ndarray,
-        y: np.ndarray,
-        batch_size=256,
-        patience=2,
-        validation_data=None, # overrides validation_split
-        validation_split=0.3
-    ) -> Tuple[Model, dict]:
-    """
-    Fit the model and return a tuple (fitted_model, history)
-    """
-    print(Fore.BLUE + "\nTraining model..." + Style.RESET_ALL)
+print(f"Before removing weak features, the cross-validated accuracy was equal to {round(score,2)}")
 
-    es = EarlyStopping(
-        monitor="val_loss",
-        patience=patience,
-        restore_best_weights=True,
-        verbose=1
-    )
+print(f"The RandomForestClassifier fitted with the strong features only has a score of {round(strong_model_score,2)}")
 
-    history = model.fit(
-        X,
-        y,
-        validation_data=validation_data,
-        validation_split=validation_split,
-        epochs=100,
-        batch_size=batch_size,
-        callbacks=[es],
-        verbose=0
-    )
+X_strong_features_test = X_test.drop(columns=list(weak_features))
 
-    print(f"✅ Model trained on {len(X)} rows with min val MAE: {round(np.min(history.history['val_mae']), 2)}")
+model.fit(X_strong_features, y_train)
 
-    return model, history
+# Make predictions on the testing data
+y_pred = model.predict(X_strong_features_test)
 
-
-def evaluate_model(
-        model: Model,
-        X: np.ndarray,
-        y: np.ndarray,
-        batch_size=64
-    ) -> Tuple[Model, dict]:
-    """
-    Evaluate trained model performance on the dataset
-    """
-
-    print(Fore.BLUE + f"\nEvaluating model on {len(X)} rows..." + Style.RESET_ALL)
-
-    if model is None:
-        print(f"\n❌ No model to evaluate")
-        return None
-
-    metrics = model.evaluate(
-        x=X,
-        y=y,
-        batch_size=batch_size,
-        verbose=0,
-        # callbacks=None,
-        return_dict=True
-    )
-
-    print(f"✅ Model evaluated, MAE: {round(mae, 2)}")
-
-    return metrics
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
