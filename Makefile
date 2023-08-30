@@ -4,12 +4,6 @@
 install_requirements:
 	@pip install -r requirements.txt
 
-check_code:
-	@flake8 scripts/* Project_1307/*.py
-
-black:
-	@black scripts/* Project_1307/*.py
-
 test:
 	@coverage run -m pytest tests/*.py
 	@coverage report -m --omit="${VIRTUAL_ENV}/lib/python*"
@@ -22,8 +16,6 @@ clean:
 	@rm -f .coverage
 	@rm -fr */__pycache__ */*.pyc __pycache__
 	@rm -fr build dist
-	@rm -fr Project_1307-*.dist-info
-	@rm -fr Project_1307.egg-info
 
 install:
 	@pip install . -U
