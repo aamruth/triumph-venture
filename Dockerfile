@@ -7,8 +7,8 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 # Then only, install triumph-venture!
-COPY triumph-venture triumph-venture
+COPY triumphventure triumphventure
 COPY setup.py setup.py
 RUN pip install .
 
-CMD uvicorn triumph-venture.api.main:app --host 0.0.0.0 --port $PORT
+CMD uvicorn triumphventure.api.main:app --host 0.0.0.0 --port $PORT

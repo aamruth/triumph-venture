@@ -27,7 +27,7 @@ def predict(
     """
     Make a single course prediction.
     """
-    model=app.state.model
+    model = app.state.model
     df = pd.DataFrame(locals(), index=[0])
     value = model.predict(df)
 
