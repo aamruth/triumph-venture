@@ -35,9 +35,9 @@ def predict(
 
     print("reached")
 
-    model = app.state.model
     print(locals())
     df = pd.DataFrame(locals(), index=[0])
+    model = app.state.model
     value = model.predict(df)
     print(value)
 

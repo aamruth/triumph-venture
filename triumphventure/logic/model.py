@@ -11,9 +11,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler
 
-
-data = pd.read_csv('../triumphventure/data/clean_data.csv', encoding= 'unicode_escape')
-
 def evaluate_model():
     return 0.93
 def test():
@@ -67,9 +64,9 @@ def save_model():
 
     # Load Pipeline from pickle file in another notebook
 def load_model():
-    pickle_file_dir = os.path.dirname(os.path.abspath(os.getcwd()))
-    my_pickle_file = os.path.join(pickle_file_dir,'fitted_model_tv.pkl')
-    my_model = pickle.load(open(my_pickle_file,"rb"))
+    # pickle_file_dir = os.path.dirname(os.path.abspath(os.getcwd()))
+    # my_pickle_file = os.path.join(pickle_file_dir,'fitted_model_tv.pkl')
+    my_model = pickle.load(open('./triumphventure/data/pipeline_yan_ohe.pkl',"rb"))
     return my_model
 
 if __name__ == "__main__":
