@@ -23,7 +23,8 @@ def predict(
         days_in_business: int,
         funding_rounds: int,
         funding_total_usd: int,
-        country_code: str,
+        country_usa: bool,
+        time_between_first_last_funding: int,
     ):
     """
     Make a single course prediction.
@@ -31,9 +32,13 @@ def predict(
     # find difference between founding_date and todays date
     # founding_date - timezone.now()
 
+    print("reached")
+
     model = app.state.model
+    print(locals())
     df = pd.DataFrame(locals(), index=[0])
     value = model.predict(df)
+    print(value)
 
     return value
 
