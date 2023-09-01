@@ -1,0 +1,11 @@
+/* styles.css */
+/* Centered title with bigger font in the sidebar */
+.data-input-title {
+  text-align: center;
+  font-size: 24px;
+}
+/* Adjust size and spacing of sidebar content */
+.sidebar-container {
+  width: 100%;
+  padding: 5px;
+}
