@@ -46,3 +46,6 @@ def predict(
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
+
+predict('Software',100,2,100,'Others',100)
