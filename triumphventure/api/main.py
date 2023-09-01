@@ -2,6 +2,7 @@ import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from triumphventure.logic.model import load_model
+from triumphventure.logic.custom_transformers import columnDropperTransformer
 
 app = FastAPI()
 
@@ -37,6 +38,7 @@ def predict(
     model = app.state.model
     print(locals())
     df = pd.DataFrame(locals(), index=[0])
+    model.transform(df)
     value = model.predict(df)
     print(value)
 
