@@ -19,11 +19,11 @@ app.add_middleware(
 # http://127.0.0.1:8000/predict?funding_rounds=1&time_between_first_last_funding=89&days_in_business=300&country_usa=true
 @app.get("/predict")
 def predict(
-        industry_category: int,
-        founding_date: datetime,
-        total_investments: int,
-        investment_round: int,
-        country: str,
+        Industry_Group: str,
+        days_in_business: int,
+        funding_rounds: int,
+        funding_total_usd: int,
+        country_code: str,
     ):
     """
     Make a single course prediction.
