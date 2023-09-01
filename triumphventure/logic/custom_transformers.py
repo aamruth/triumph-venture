@@ -32,10 +32,6 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import RobustScaler
-
-
-data = pd.read_csv('../triumphventure/data/clean_data.csv', encoding= 'unicode_escape')
 
 class columnDropperTransformer(TransformerMixin, BaseEstimator):
         def __init__(self):
@@ -75,64 +71,3 @@ class columnDropperTransformer(TransformerMixin, BaseEstimator):
             # Create a DataFrame with the transformed data and feature names
             transformed_df = pd.DataFrame(data=encoded, columns=self.feature_names_)
             return transformed_df.drop(self.weak_features, axis=1)
-
-def evaluate_model():
-    return 0.93
-def test():
-    pass
-def pre_process_mydata():
-    # Drop the unnamed column
-    data = data.drop(columns=['Unnamed: 0'])
-
-
-
-    preproc_numerical= make_pipeline(
-        SimpleImputer(),
-        RobustScaler()
-    )
-
-    preproc_categorical_Industry_Group_country = make_pipeline(
-        SimpleImputer(strategy="most_frequent"),
-        columnDropperTransformer()
-    )
-
-    preproc = make_column_transformer(
-        (preproc_numerical, make_column_selector(dtype_include=["int64", "float64"])),
-        (preproc_categorical_Industry_Group_country, make_column_selector(dtype_include=["object"]))
-    )
-
-
-    pipe_baseline = make_pipeline(preproc, RandomForestClassifier(random_state=42))
-    return pipe_baseline
-
-def create_pipeline():
-    pass
-
-def initialise_model():
-    pipe_baseline = pre_process_mydata()
-     #X_strong_features_test = X_test_new.drop(columns=list(weak_features))
-    y_new = data["status"].astype(int)
-    X_new = data.drop(columns=["status"])
-
- # Split data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X_new, y_new, test_size=0.2, random_state=42)
-    pipe_baseline.fit(X_train,y_train)
-    return pipe_baseline
-
-
-def save_model():
-    # YOUR CODE HERE
-    pipe_baseline = initialise_model()
-    # Export Pipeline as pickle file
-    with open("fitted_model_tv.pkl", "wb") as file:
-        pickle.dump(pipe_baseline, file)
-
-    # Load Pipeline from pickle file in another notebook
-def load_model():
-    pickle_file_dir = os.path.dirname(os.path.abspath(os.getcwd()))
-    my_pickle_file = os.path.join(pickle_file_dir,'fitted_model_tv.pkl')
-    my_model = pickle.load(open(my_pickle_file,"rb"))
-    return my_model
-
-if __name__ == "__main__":
-    load_model()
