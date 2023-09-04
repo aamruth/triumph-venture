@@ -103,14 +103,14 @@ elif selected == "Prediction Input":
 
         # Mapping of slider values to labels
         investment_round_labels = {
-            1: '1',
-            2: '2',
-            3: '3',
-            4: '4',
-            5: '5',
-            6: '6',
-            7: '7',
-            8: '8'
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: 6,
+            7: 7,
+            8: 8
         }
 
         # Slider for Investment Round (labeled A to H)
@@ -123,7 +123,7 @@ elif selected == "Prediction Input":
         # Collect API input
         api_input = {
             "Industry_Group": industry_category,          # string
-            "funding_total_usd ": total_investments,      # float
+            "funding_total_usd": total_investments,      # float
             "country_code": output_value,                 # "USA" or "Other"
             "funding_rounds": investment_round_label,     # int 1-8
             "time_between_first_last_funding": time_between_first_last_funding,  # int
@@ -132,11 +132,11 @@ elif selected == "Prediction Input":
 
         def preproc_input(input_dict):
             data = pd.DataFrame(input_dict, index=[0])
-            list_of_ind = ['Industry_Group_Biotechnology', 'Industry_Group_Commerce and Shopping',
-                           'Industry_Group_Community and Lifestyle',
-                           'Industry_Group_Health Care',
-                            'Industry_Group_Information Technology',
-                            'Industry_Group_Internet Services',
+            list_of_ind = ['Industry_Group_Biotechnology', 'Industry_Group_Commerce_and_Shopping',
+                           'Industry_Group_Community_and_Lifestyle',
+                           'Industry_Group_Health_Care',
+                            'Industry_Group_Information_Technology',
+                            'Industry_Group_Internet_Services',
                             'Industry_Group_Other',
                             'Industry_Group_Software']
             list_of_ind_stripped = ['Biotechnology', 'Commerce and Shopping',
@@ -150,20 +150,23 @@ elif selected == "Prediction Input":
                 data[industry] = 0.0
             for industry in list_of_ind_stripped:
                 if data['Industry_Group'][0] == industry:
-                    data[f'Industry_Group_{industry}'] = 1.0
+                    data[f'Industry_Group_{industry.replace(" ", "_")}'] = 1.0
             return data.drop(columns=['Industry_Group']).iloc[0].to_dict()
 
         # Make API request
         if st.button("Predict success"):
-            url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict?"
+            url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict"
             response = requests.get(url, params=preproc_input(api_input))
             print(response)
             print(url)
-            print(preproc_input(api_input))
+            result_dict = preproc_input(api_input)
+
+            # Print the values of the dictionary
+            print(result_dict.values())
             if response.status_code == 200:
                 prediction = response.json()#['status_code']
                 print(prediction)
-                st.success(f"Predicted rate of success: {prediction:.2f}")
+                st.success(f"Predicted rate of success: {prediction}")
 
             else:
                 st.error("Error fetching prediction from the API")
