@@ -76,10 +76,26 @@ def read_root():
 def read_root(
         name: str
 ):
-    data = pd.read_csv('./triumphventure/data/companies.csv', encoding="utf-8", encoding_errors='replace')
-    info = data[data["name"] == name]
-    print(info)
+    companies = pd.read_csv('./triumphventure/data/companies.csv', encoding="utf-8", encoding_errors='replace')
+    rounds = pd.read_csv('./triumphventure/data/rounds.csv', encoding="utf-8", encoding_errors='replace')
+    company = companies[companies["name"] == name].fillna('').iloc[0]
+    company_rounds = rounds[rounds["company_name"] == name].fillna('')
+    all_rounds = []
+    for _, round in company_rounds.iterrows():
+        all_rounds.append({
+            "raised_amount_usd": round["raised_amount_usd"],
+            "round_type": round["funding_round_type"],
+            "funded_at": round["funded_at"],
+            "funding_round_code": round["funding_round_code"],
+        })
     return {
-        "name": info["name"],
-        "funding_total_usd": info["funding_total_usd"],
+        "name": company["name"],
+        "status": company["status"],
+        "category_list": company["category_list"],
+        "country_code": company["country_code"],
+        "funding_total_usd": company["funding_total_usd"],
+        "founded_at": company["founded_at"],
+        "first_funding_at": company["first_funding_at"],
+        "last_funding_at": company["last_funding_at"],
+        "rounds": all_rounds,
     }
