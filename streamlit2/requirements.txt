@@ -1,0 +1,6 @@
+streamlit
+pandas
+requests
+pillow
+datetime
+streamlit_option_menu
