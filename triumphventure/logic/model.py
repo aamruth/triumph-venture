@@ -30,7 +30,7 @@ def create_pipeline():
 
     preproc_categorical_Industry_Group_country = make_pipeline(
         SimpleImputer(strategy="most_frequent"),
-        columnDropperTransformer()
+        #columnDropperTransformer()
     )
 
     preproc = make_column_transformer(
@@ -66,7 +66,11 @@ def save_model():
 def load_model():
     # pickle_file_dir = os.path.dirname(os.path.abspath(os.getcwd()))
     # my_pickle_file = os.path.join(pickle_file_dir,'fitted_model_tv.pkl')
-    my_model = pickle.load(open('./triumphventure/data/pipeline_yan_ohe.pkl',"rb"))
+    MODEL_TARGET = os.environ.get("LOCAL", "N")
+    if(MODEL_TARGET == "N"):
+        my_model = pickle.load(open('./triumphventure/data/pipeline_yan_ohe.pkl',"rb"))
+    else:
+        my_model = pickle.load(open('../data/pipeline_yan_ohe.pkl',"rb"))
     return my_model
 
 if __name__ == "__main__":
