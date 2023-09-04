@@ -18,6 +18,7 @@ app.add_middleware(
 )
 
 # http://127.0.0.1:8000/predict?Industry_Group_Other=0&Industry_Group_Health_Care=0&days_in_business=350&funding_rounds=2&country_code=USA&funding_total_usd=1000&time_between_first_last_funding=100&Industry_Group_Information_Technology=1&Industry_Group_Commerce_and_Shopping=0&Industry_Group_Community_and_Lifestyle=0&Industry_Group_Software=0&Industry_Group_Biotechnology=0&Industry_Group_Internet_Services=0
+# {'funding_total_usd ': 0.0, 'country_code': 'USA', 'funding_rounds': 'A', 'time_between_first_last_funding': 0, 'days_in_business': 0, 'Industry_Group_Biotechnology': 0.0, 'Industry_Group_Commerce and Shopping': 0.0, 'Industry_Group_Community and Lifestyle': 0.0, 'Industry_Group_Health Care': 0.0, 'Industry_Group_Information Technology': 0.0, 'Industry_Group_Internet Services': 0.0, 'Industry_Group_Other': 0.0, 'Industry_Group_Software': 0.0}
 # http://127.0.0.1:8000/predict?funding_rounds=1&time_between_first_last_funding=89&days_in_business=300&country_usa=true
 @app.get("/predict")
 def predict(
@@ -69,3 +70,16 @@ def predict(
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
+
+@app.get("/search")
+def read_root(
+        name: str
+):
+    data = pd.read_csv('./triumphventure/data/companies.csv', encoding="utf-8", encoding_errors='replace')
+    info = data[data["name"] == name]
+    print(info)
+    return {
+        "name": info["name"],
+        "funding_total_usd": info["funding_total_usd"],
+    }
