@@ -16,6 +16,7 @@ with st.sidebar:
 
 def set_background_image(image_url):
     # css for bg image? -> not working -> opacity
+    image_url = "https://i.ibb.co/9gxfp5b/istockphoto-619253992-1024x1024.jpg"
     st.markdown(
         f"""
         <style>
@@ -42,8 +43,25 @@ if selected == "Home":
              "understanding of the factors affecting venture success.")
 elif selected == "Prediction Input":
     #st.title(f"You are now on {selected}")
+    search_query = st.text_input("Search for a company")
+    # Button to trigger API request
+    #api_company_url =
+    if st.button("Submit company name"):
+        if search_query:
+            # Send the search_query to your API       --------------> TODO : Company API URL
+            payload = {"search_query": search_query}
+            response = requests.get(api_company_url, params=payload)
+
+            if response.status_code == 200:
+                prediction = response.json().get("prediction")
+                st.success(f"Prediction for {search_query}: {prediction}")
+            else:
+                st.error("Error getting company name from the db.")
+        else:
+            st.warning("Please enter a company name or data.")
 
     # collapsible box
+    st.write("Alternatively, you can enter the company data yourself.")
     expand_input = st.checkbox("Expand Prediction Input Details", False)
     if expand_input:
         # Dropdown field for selecting Country
@@ -153,9 +171,11 @@ elif selected == "Prediction Input":
                     data[f'Industry_Group_{industry.replace(" ", "_")}'] = 1.0
             return data.drop(columns=['Industry_Group']).iloc[0].to_dict()
 
+
+        url = st.secrets.google_api.key
         # Make API request
         if st.button("Predict success"):
-            url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict"
+            url = st.secrets.google_api.key
             response = requests.get(url, params=preproc_input(api_input))
             print(response)
             print(url)

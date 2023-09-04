@@ -3,4 +3,5 @@ pandas
 requests
 pillow
 datetime
+streamlit-option-menu
 streamlit_option_menu
