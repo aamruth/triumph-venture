@@ -17,15 +17,23 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# http://127.0.0.1:8000/predict?Industry_Group_Other=0&Industry_Group_Health_Care=0&days_in_business=350&funding_rounds=2&country_code=USA&funding_total_usd=1000&time_between_first_last_funding=100&Industry_Group_Information_Technology=1&Industry_Group_Commerce_and_Shopping=0&Industry_Group_Community_and_Lifestyle=0&Industry_Group_Software=0&Industry_Group_Biotechnology=0&Industry_Group_Internet_Services=0
 # http://127.0.0.1:8000/predict?funding_rounds=1&time_between_first_last_funding=89&days_in_business=300&country_usa=true
 @app.get("/predict")
 def predict(
-        Industry_Group: str,
-        days_in_business: int,
-        funding_rounds: int,
-        funding_total_usd: int,
-        country_usa: bool,
-        time_between_first_last_funding: int,
+        funding_total_usd,
+        country_code,
+        funding_rounds,
+        time_between_first_last_funding,
+        days_in_business,
+        Industry_Group_Biotechnology,
+        Industry_Group_Commerce_and_Shopping,
+        Industry_Group_Community_and_Lifestyle,
+        Industry_Group_Health_Care,
+        Industry_Group_Information_Technology,
+        Industry_Group_Internet_Services,
+        Industry_Group_Other,
+        Industry_Group_Software
     ):
     """
     Make a single course prediction.
@@ -35,17 +43,29 @@ def predict(
 
     print("reached")
 
-    model = app.state.model
     print(locals())
-    df = pd.DataFrame(locals(), index=[0])
+    df = pd.DataFrame({
+        'funding_total_usd': funding_total_usd,
+        'country_code': country_code,
+        'funding_rounds': funding_rounds,
+        'time_between_first_last_funding': time_between_first_last_funding,
+        'days_in_business': days_in_business,
+        'Industry_Group_Biotechnology': Industry_Group_Biotechnology,
+        'Industry_Group_Commerce and Shopping': Industry_Group_Commerce_and_Shopping,
+        'Industry_Group_Community and Lifestyle': Industry_Group_Community_and_Lifestyle,
+        'Industry_Group_Health Care': Industry_Group_Health_Care,
+        'Industry_Group_Information Technology': Industry_Group_Information_Technology,
+        'Industry_Group_Internet Services': Industry_Group_Internet_Services,
+        'Industry_Group_Other': Industry_Group_Other,
+        'Industry_Group_Software': Industry_Group_Software,
+    }
+    , index=[0])
+    model = app.state.model
     value = model.predict(df)
     print(value)
 
-    return value
+    return {"value": value.tolist()}
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
-
-predict('Software',100,2,100,'Others',100)
