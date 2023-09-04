@@ -103,14 +103,14 @@ elif selected == "Prediction Input":
 
         # Mapping of slider values to labels
         investment_round_labels = {
-            1: 'A',
-            2: 'B',
-            3: 'C',
-            4: 'D',
-            5: 'E',
-            6: 'F',
-            7: 'G',
-            8: 'H'
+            1: '1',
+            2: '2',
+            3: '3',
+            4: '4',
+            5: '5',
+            6: '6',
+            7: '7',
+            8: '8'
         }
 
         # Slider for Investment Round (labeled A to H)
@@ -157,10 +157,14 @@ elif selected == "Prediction Input":
         if st.button("Predict success"):
             url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict?"
             response = requests.get(url, params=preproc_input(api_input))
-
+            print(response)
+            print(url)
+            print(preproc_input(api_input))
             if response.status_code == 200:
-                prediction = response.json()['success']
+                prediction = response.json()#['status_code']
+                print(prediction)
                 st.success(f"Predicted rate of success: {prediction:.2f}")
+
             else:
                 st.error("Error fetching prediction from the API")
 
