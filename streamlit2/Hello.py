@@ -1,0 +1,174 @@
+import streamlit as st
+from streamlit_option_menu import option_menu
+import datetime
+import requests
+import pandas as pd
+
+
+
+
+with st.sidebar:
+    selected = option_menu(
+        menu_title="Main Menu",
+        options=["Home", "Prediction Input", "Visualization"],
+        icons=["house", "pencil", "graph-up"]
+    )
+
+def set_background_image(image_url):
+    # css for bg image? -> not working -> opacity
+    st.markdown(
+        f"""
+        <style>
+            .stApp {{
+                background-image: url("{image_url}");
+                background-size: cover;
+                background-repeat: no-repeat;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+# sections
+if selected == "Home":
+    st.title(f"You have selected {selected}")
+    st.title(f"Welcome to the Le Wagon Berlin Data Science Batch 1307 Venture Success Prediction Website")
+    st.write("We are a team of data scientists from Le Wagon Berlin Data Science Batch 1307, "
+             "and we have built this website to help you predict the success of your venture.")
+    st.write("Our website uses machine learning algorithms to provide insights into factors that "
+             "impact the success of startups and businesses.")
+    st.write("You can use the 'Prediction Input' section to input information about your venture, "
+             "and we will provide you with a prediction of your venture's success.")
+    st.write("Explore the 'Visualization' section to view data visualizations and gain a deeper "
+             "understanding of the factors affecting venture success.")
+elif selected == "Prediction Input":
+    st.title(f"You have selected {selected}")
+
+    # collapsible box
+    expand_input = st.checkbox("Expand Prediction Input Details", False)
+    if expand_input:
+        # Dropdown field for selecting Country
+        country_options = [
+            'United States', 'Estonia', 'United Kingdom', 'Argentina', 'Hong Kong',
+            'Chile', 'Germany', 'France', 'China', 'Canada', 'Australia', 'Romania',
+            'Netherlands', 'Sweden', 'Russia', 'Denmark', 'India', 'Singapore',
+            'Norway', 'Belgium', 'Ireland', 'Italy', 'Israel', 'Spain', 'Thailand',
+            'New Zealand', 'Czech Republic', 'Switzerland', 'Brazil', 'Hungary',
+            'Japan', 'Botswana', 'South Korea', 'Nigeria', 'Finland', 'Turkey',
+            'Costa Rica', 'Portugal', 'Taiwan', 'Cambodia', 'Colombia', 'Ukraine',
+            'Lithuania', 'South Africa', 'Austria', 'Philippines', 'Iceland',
+            'Bulgaria', 'Uruguay', 'Croatia', 'Kenya', 'Mexico', 'Jordan', 'Vietnam',
+            'Ghana', 'Peru', 'Poland', 'Indonesia', 'Panama', 'Latvia', 'Albania',
+            'Uganda', 'Lebanon', 'Greece', 'United Arab Emirates', 'Pakistan',
+            'Egypt', 'Slovakia', 'Luxembourg', 'Malaysia', 'Bahamas', 'Armenia',
+            'Algeria', 'Moldova', 'Tunisia', 'Nicaragua', 'Tanzania', 'Cyprus',
+            'Nepal', 'Bahrain', 'Cameroon', 'Serbia', 'Saudi Arabia', 'Cayman Islands',
+            'Brunei', 'El Salvador', 'Ecuador', 'Malta', 'Slovenia', 'Laos',
+            'Trinidad and Tobago', 'Morocco', 'Myanmar', 'Bangladesh',
+            'Dominican Republic', 'Bermuda', 'Liechtenstein', 'Mozambique', 'Guatemala',
+            'Azerbaijan', 'Monaco', 'Zimbabwe', 'Uzbekistan', 'Oman', 'Belarus',
+            'Jersey', 'Jamaica', 'Kuwait', 'Mauritius', 'Ivory Coast', 'Somalia',
+            'North Macedonia', 'Gibraltar', 'Seychelles', 'Saint Martin'
+        ]
+        selected_country = st.selectbox("Select Country", country_options)
+
+        # Map selected country to output value
+        output_value = "USA" if selected_country == "United States" else "Other"
+
+        # Alphabetically sorted list of Industry Categories
+        industry_categories = [
+            'Administrative Services', 'Advertising', 'Agriculture and Farming',
+            'Apps', 'Artificial Intelligence', 'Clothing and Apparel', 'Commerce and Shopping',
+            'Community and Lifestyle', 'Consumer Electronics', 'Consumer Goods', 'Data and Analytics',
+            'Design', 'Education', 'Energy', 'Events', 'Financial Services', 'Food and Beverage',
+            'Gaming', 'Government and Military', 'Hardware', 'Health Care', 'Information Technology',
+            'Internet Services', 'Manufacturing', 'Media and Entertainment', 'Messaging and Telecommunication',
+            'Mobile', 'Natural Resources', 'Navigation and Mapping', 'Other', 'Platforms', 'Privacy and Security',
+            'Professional Services', 'Real Estate', 'Sales and Marketing', 'Science and Engineering',
+            'Software', 'Sports', 'Sustainability', 'Technology', 'Telecommunication', 'Tourism', 'Transportation'
+        ]
+        # Dropdown field for Industry Category
+        industry_category = st.selectbox("Please select your Industry Category", industry_categories)
+
+        # Calculate the default date in the middle of the specified range
+        default_founding_date = datetime.date(2005, 1, 1)
+
+        # Date input for Company founding date
+        days_in_business = st.number_input("Days in Business", min_value=0)
+
+        # Time between first and Last funding input
+        time_between_first_last_funding = st.number_input("Time between first and last funding", min_value=0)
+
+        # Input field for Total Investments in USD
+        total_investments = st.number_input("Total Investments (USD)", min_value=0.0)
+
+        # Mapping of slider values to labels
+        investment_round_labels = {
+            1: 'A',
+            2: 'B',
+            3: 'C',
+            4: 'D',
+            5: 'E',
+            6: 'F',
+            7: 'G',
+            8: 'H'
+        }
+
+        # Slider for Investment Round (labeled A to H)
+        investment_round_value = st.slider("Investment Round", min_value=1, max_value=8, value=1)
+
+        # Display the selected investment round label
+        investment_round_label = investment_round_labels[investment_round_value]
+        st.write("Investment Round:", investment_round_label)
+
+        # Collect API input
+        api_input = {
+            "Industry_Group": industry_category,          # string
+            "funding_total_usd ": total_investments,      # float
+            "country_code": output_value,                 # "USA" or "Other"
+            "funding_rounds": investment_round_label,     # int 1-8
+            "time_between_first_last_funding": time_between_first_last_funding,  # int
+            "days_in_business": days_in_business,         # int
+        }
+
+        def preproc_input(input_dict):
+            data = pd.DataFrame(input_dict, index=[0])
+            list_of_ind = ['Industry_Group_Biotechnology', 'Industry_Group_Commerce and Shopping',
+                           'Industry_Group_Community and Lifestyle',
+                           'Industry_Group_Health Care',
+                            'Industry_Group_Information Technology',
+                            'Industry_Group_Internet Services',
+                            'Industry_Group_Other',
+                            'Industry_Group_Software']
+            list_of_ind_stripped = ['Biotechnology', 'Commerce and Shopping',
+                           'Community and Lifestyle',
+                           'Health Care',
+                            'Information Technology',
+                            'Internet Services',
+                            'Other',
+                            'Software']
+            for industry in list_of_ind:
+                data[industry] = 0.0
+            for industry in list_of_ind_stripped:
+                if data['Industry_Group'][0] == industry:
+                    data[f'Industry_Group_{industry}'] = 1.0
+            return data.drop(columns=['Industry_Group']).iloc[0].to_dict()
+
+        # Make API request
+        if st.button("Predict success"):
+            url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict?"
+            response = requests.get(url, params=preproc_input(api_input))
+
+            if response.status_code == 200:
+                prediction = response.json()['success']
+                st.success(f"Predicted rate of success: {prediction:.2f}")
+            else:
+                st.error("Error fetching prediction from the API")
+
+elif selected == "Visualization":
+    st.title(f"You have selected {selected}")
+    # Add your Visualization page content here.
+
+# Close the sidebar
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
