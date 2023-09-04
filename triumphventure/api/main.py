@@ -18,6 +18,7 @@ app.add_middleware(
 )
 
 # http://127.0.0.1:8000/predict?Industry_Group_Other=0&Industry_Group_Health_Care=0&days_in_business=350&funding_rounds=2&country_code=USA&funding_total_usd=1000&time_between_first_last_funding=100&Industry_Group_Information_Technology=1&Industry_Group_Commerce_and_Shopping=0&Industry_Group_Community_and_Lifestyle=0&Industry_Group_Software=0&Industry_Group_Biotechnology=0&Industry_Group_Internet_Services=0
+# {'funding_total_usd ': 0.0, 'country_code': 'USA', 'funding_rounds': 'A', 'time_between_first_last_funding': 0, 'days_in_business': 0, 'Industry_Group_Biotechnology': 0.0, 'Industry_Group_Commerce and Shopping': 0.0, 'Industry_Group_Community and Lifestyle': 0.0, 'Industry_Group_Health Care': 0.0, 'Industry_Group_Information Technology': 0.0, 'Industry_Group_Internet Services': 0.0, 'Industry_Group_Other': 0.0, 'Industry_Group_Software': 0.0}
 # http://127.0.0.1:8000/predict?funding_rounds=1&time_between_first_last_funding=89&days_in_business=300&country_usa=true
 @app.get("/predict")
 def predict(
@@ -69,3 +70,32 @@ def predict(
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
+
+@app.get("/search")
+def read_root(
+        name: str
+):
+    companies = pd.read_csv('./triumphventure/data/companies.csv', encoding="utf-8", encoding_errors='replace')
+    rounds = pd.read_csv('./triumphventure/data/rounds.csv', encoding="utf-8", encoding_errors='replace')
+    company = companies[companies["name"] == name].fillna('').iloc[0]
+    company_rounds = rounds[rounds["company_name"] == name].fillna('')
+    all_rounds = []
+    for _, round in company_rounds.iterrows():
+        all_rounds.append({
+            "raised_amount_usd": round["raised_amount_usd"],
+            "round_type": round["funding_round_type"],
+            "funded_at": round["funded_at"],
+            "funding_round_code": round["funding_round_code"],
+        })
+    return {
+        "name": company["name"],
+        "status": company["status"],
+        "category_list": company["category_list"],
+        "country_code": company["country_code"],
+        "funding_total_usd": company["funding_total_usd"],
+        "founded_at": company["founded_at"],
+        "first_funding_at": company["first_funding_at"],
+        "last_funding_at": company["last_funding_at"],
+        "rounds": all_rounds,
+    }
