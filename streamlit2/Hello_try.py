@@ -4,6 +4,9 @@ import datetime
 import requests
 import pandas as pd
 import statsmodels.api as sm
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+
 
 def preproc_input(input_dict):
     data = pd.DataFrame(input_dict, index=[0])
@@ -286,24 +289,19 @@ elif selected == "Forecast Input":
                 "amount": cumulative_sum,
             }
 
-            # Create a DataFrame
-            df = pd.DataFrame(data)
+            # Convert dates to numerical values (e.g., timestamps)
+            numeric_dates = [data.index[m]['date'] for m in range(0,len(rounds_funds))]
 
-            # Set the date as the index
-            df.set_index("date", inplace=True)
+            # Create an interpolation function
+            interp_func = interp1d(numeric_dates, cumulative_sum, kind='linear')
 
-            # Create a time series
-            ts = df["amount"]
+            future_dates = pd.date_range(start=data.index[-1]['date'] + pd.DateOffset(months=6), periods=5, freq="6M")
 
-            # Forecast for the next 3 years (36 months) using ARIMA
-            model = sm.tsa.ARIMA(ts, order=(1, 1, 1))  # Adjust order as needed
-            result = model.fit()
+            # Define a date for forecasting
+            forecast_date = future_dates.timestamp()
 
-            # Generate future dates for forecasting
-            future_dates = pd.date_range(start=ts.index[-1] + pd.DateOffset(months=12), periods=5, freq="365D")
-
-            # Forecast future values
-            forecast_values = result.predict(start=len(ts), end=len(ts) + 4, dynamic=True, typ='levels')
+            # Use the interpolation function to forecast the value
+            forecast_values = interp_func(forecast_date)
 
             # Create a DataFrame for the forecast
             forecast_df = pd.DataFrame({"date": future_dates, "funding_total_usd": forecast_values})
@@ -322,7 +320,7 @@ elif selected == "Forecast Input":
 
             return forecast_df.reset_index(drop=True)
 
-        print(prediction_interp(list_of_round_dates, list_of_round_funds, api_input).drop(columns=['date']).iloc[0].to_dict())
+
         # Collect API input
         #api_input = {
         #    "Industry_Group": industry_category,          # string
@@ -332,32 +330,50 @@ elif selected == "Forecast Input":
         #    "time_between_first_last_funding": time_between_first_last_funding,  # int
         #    "days_in_business": days_in_business,         # int
         #}
-        #url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict"
+        url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict"
 
-        #response = requests.get(url, params=prediction_interp(list_of_round_dates, list_of_round_funds, api_input).drop(columns=['date']).iloc[4].to_dict())
-        #print(response)
+        list_of_results = []
+
+        for n in range(0,6):
+            check = preproc_input(prediction_interp(list_of_round_dates, list_of_round_funds, api_input).drop(columns=['date']).iloc[0].to_dict())
+            response = requests.get(url, params=check)
+            list_of_results.append(response.json()['value'][0])
+
+        print(list_of_results)
+
+
 
         # Make API request
-        if st.button("Predict success"):
-            url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict"
-            response = requests.get(url, params=preproc_input(api_input))
-            print(response)
-            print(url)
-            result_dict = preproc_input(api_input)
+        if st.button("Forecast success"):
 
+            dates = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['date']
+            money_amounts = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['funding_total_usd']
+            failure_success = list_of_results
 
-                # Print the values of the dictionary
-            print(result_dict.values())
-            if response.status_code == 200:
-                prediction = response.json()#['status_code']
-                print(prediction)
-                if prediction['value'][0] == 1:
-                    st.success("Good job! You have a successful startup!")
-                else:
-                    st.success("It seems like your startup is not there yet... Use the feature below for possible forecasts.")
-                    #st.success(f"Predicted rate of success: {prediction}")
-            else:
-                st.error("Something went wrong :)")
+            # Find the index of the first success
+            first_success_index = failure_success.index(1) if 1 in failure_success else len(failure_success)
+
+            # Separate data into failure and success portions
+            failure_dates = dates[:first_success_index]
+            failure_amounts = money_amounts[:first_success_index]
+
+            # Create a scatter plot for failures
+            fig, ax = plt.subplots()
+            ax.scatter(failure_dates, failure_amounts, label='Failure', color='red', marker='x')
+
+            # # If there are success data points after the first success, separate and plot them
+            # if first_success_index < len(dates):
+            #     success_dates = dates[first_success_index]
+            #     success_amounts = money_amounts[first_success_index]
+            #     fig = plt.scatter(success_dates, success_amounts, label='Success', color='green', marker='o')
+
+            # Adding a legend
+            #legend = plt.legend()
+
+            st.pyplot(fig)
+
+            st.success(list_of_results)
+
 elif selected == "Visualization":
     st.title(f"You have selected {selected}")
     # Add your Visualization page content here.
