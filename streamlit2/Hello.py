@@ -30,7 +30,7 @@ def set_background_image(image_url):
     )
 # sections
 if selected == "Home":
-    st.title(f"You have selected {selected}")
+    #st.title(f"You are now on {selected}")
     st.title(f"Welcome to the Le Wagon Berlin Data Science Batch 1307 Venture Success Prediction Website")
     st.write("We are a team of data scientists from Le Wagon Berlin Data Science Batch 1307, "
              "and we have built this website to help you predict the success of your venture.")
@@ -41,7 +41,7 @@ if selected == "Home":
     st.write("Explore the 'Visualization' section to view data visualizations and gain a deeper "
              "understanding of the factors affecting venture success.")
 elif selected == "Prediction Input":
-    st.title(f"You have selected {selected}")
+    #st.title(f"You are now on {selected}")
 
     # collapsible box
     expand_input = st.checkbox("Expand Prediction Input Details", False)
@@ -172,7 +172,7 @@ elif selected == "Prediction Input":
                 st.error("Error fetching prediction from the API")
 
 elif selected == "Visualization":
-    st.title(f"You have selected {selected}")
+    st.title(f"You are now on {selected}")
     # Add your Visualization page content here.
 
 # Close the sidebar
