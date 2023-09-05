@@ -188,7 +188,7 @@ elif selected == "Prediction Input":
                 if prediction_value == 1:
                     st.success("The status is still operational, however we think it will be a success!")
                 elif prediction_value == 0:
-                    st.error("The status is still operational, however we think might be failing...")
+                    st.error("The status is still operational, however we think your company might be failing...")
             else:
                 st.error("Error fetching prediction from the API")
 
