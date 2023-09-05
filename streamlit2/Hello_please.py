@@ -14,8 +14,8 @@ list_of_names = pd.read_csv('data/company_names.csv', encoding= 'unicode_escape'
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",
-        options=["Home", "Prediction Input", "Visualization"],
-        icons=["house", "pencil", "graph-up"]
+        options=["Home", "Prediction Input", "Visualization", "Upload CSV"],
+        icons=["house", "pencil", "graph-up","filetype-csv"]
     )
 
 def set_background_image(image_url):
@@ -190,6 +190,10 @@ elif selected == "Prediction Input":
                 print(prediction)
                 if prediction_value == 1:
                     st.success("We think your company is going to be successful!")
+                    st.image(
+            "https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif", # I prefer to load the GIFs using GIPHY
+            width=400, # The actual size of most gifs on GIPHY are really small, and using the column-width parameter would make it weirdly big. So I would suggest adjusting the width manually!
+        )
                 elif prediction_value == 0:
                     st.error("Unfortunately, we think your company is going to be a failure!")
             else:
@@ -263,8 +267,59 @@ elif selected == "Visualization":
     st.pyplot(fig)
 
 
+    @st.cache_resource
+    def get_plotly_data():
+
+        z_data = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/api_docs/mt_bruno_elevation.csv')
+        z = z_data.values
+        sh_0, sh_1 = z.shape
+        x, y = np.linspace(0, 1, sh_0), np.linspace(0, 1, sh_1)
+        return x, y, z
+
+    import plotly.graph_objects as go
+
+    x, y, z = get_plotly_data()
+
+    fig = go.Figure(data=[go.Surface(z=z, x=x, y=y)])
+    fig.update_layout(title='IRR', autosize=False, width=800, height=800, margin=dict(l=40, r=40, b=40, t=40))
+    st.plotly_chart(fig)
 
 
+    @st.cache_resource
+    def get_altair_data():
+
+        return pd.DataFrame(
+                np.random.randn(200, 3),
+                columns=['a', 'b', 'c']
+            )
+
+    import altair as alt
+
+    df = get_altair_data()
+
+    c = alt.Chart(df).mark_circle().encode(
+        x='a', y='b', size='c', color='c', tooltip=['a', 'b', 'c'])
+
+    st.write(c)
+elif selected == "Upload CSV":
+    st.title(f"You have selected {selected}")
+
+    st.write("Please upload your CSV file below:")
+    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+
+    if uploaded_file is not None:
+        try:
+            # Read the uploaded CSV file
+            df = pd.read_csv(uploaded_file)
+
+            # Display the first few rows of the uploaded data
+            st.write("Uploaded data:")
+            st.write(df.head())
+
+            # You can perform further data analysis or visualization here
+
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
 # Close the sidebar
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
