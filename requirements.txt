@@ -31,3 +31,13 @@ memoized-property
 termcolor
 
 ydata-profiling
+
+#streamlit
+streamlit
+pandas
+requests
+pillow
+datetime
+streamlit-option-menu
+streamlit_option_menu
+matplotlib.pyplot
