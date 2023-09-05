@@ -45,20 +45,29 @@ elif selected == "Prediction Input":
     #st.title(f"You are now on {selected}")
     search_query = st.text_input("Search for a company")
     # Button to trigger API request
-    #api_company_url =
+    api_company_url = st.secrets.google_name.key_search
     if st.button("Submit company name"):
         if search_query:
-            # Send the search_query to your API       --------------> TODO : Company API URL
-            payload = {"search_query": search_query}
-            response = requests.get(api_company_url, params=payload)
+            try:
+                # Send the search_query to your API
+                payload = {"name": search_query}
+                response = requests.get(api_company_url, params=payload)
 
-            if response.status_code == 200:
-                prediction = response.json().get("prediction")
-                st.success(f"Prediction for {search_query}: {prediction}")
-            else:
-                st.error("Error getting company name from the db.")
-        else:
-            st.warning("Please enter a company name or data.")
+                if response.status_code == 200:
+                    result = response.json()
+                    # Display the result from the API
+                    st.success(f"Company Name: {result['name']}")
+                    st.write(f"Status: {result['status']}")
+                    st.write(f"Category List: {result['category_list']}")
+                    st.write(f"Country Code: {result['country_code']}")
+                    st.write(f"Funding Total USD: {result['funding_total_usd']}")
+                    # Display other relevant information from the API
+                else:
+                    st.error("Error fetching data from the API")
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
+    else:
+        st.warning("Please enter a company name or data.")
 
     # collapsible box
     st.write("Alternatively, you can enter the company data yourself.")
