@@ -16,8 +16,8 @@ list_of_names = pd.read_csv('data/company_names.csv', encoding='unicode_escape')
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",
-        options=["Home", "Prediction Input", "Forecast Input", "Visualization", "Upload CSV"],
-        icons=["house", "pencil", "pencil", "graph-up","filetype-csv"]
+        options=["Home", "Prediction Input", "Forecast Input", "Upload CSV"],
+        icons=["house", "pencil", "graph-up","filetype-csv"]
     )
 
 def set_background_image(image_url):
@@ -77,74 +77,73 @@ elif selected == "Prediction Input":
                     url = st.secrets.google_api.key
                     response = requests.get(url, params=preproc_input(result)).json()['value'][0]
                     if response == 1:
-                        st.success("The status is still operational, however we think it will be a success!")
+                        st.success("The status is still operational. However, we think it will be a success! For better reference, look at the mean amount of funds for successful projects from your industry.")
                     elif response == 0:
-                        st.error("The status is still operational, however we think might be failing...")
+                        st.error("The status is still operational. However, we think it might be failing... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
+                    dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
+                    analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
+                    df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
+                    print(df1.head(10))
+                    # Generate some example data
 
-                dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
-                analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
-                df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
-                print(df1.head(10))
-                # Generate some example data
+                    df1_software = df1[df1["Industry_Group_x"] == result['Industry_Group']]
 
-                df1_software = df1[df1["Industry_Group_x"] == result['Industry_Group']]
+                    final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
 
-                final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
+                    final_status.name = 'final status'
 
-                final_status.name = 'final status'
+                    df1_software = df1_software.join(final_status, on='company_name')
 
-                df1_software = df1_software.join(final_status, on='company_name')
+                    funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
+                        {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
+                    )
+                    # Select the data for final status = acquired
+                    acquired_data = funds_per_round.loc['acquired']
 
-                funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
-                    {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
-                )
-                # Select the data for final status = acquired
-                acquired_data = funds_per_round.loc['acquired']
+                    # Extract the time between founded and funded and raised amount data
+                    time_data = acquired_data['time_between_founded_funded_at']
+                    raised_data = acquired_data['raised_amount_usd']
 
-                # Extract the time between founded and funded and raised amount data
-                time_data = acquired_data['time_between_founded_funded_at']
-                raised_data = acquired_data['raised_amount_usd']
+                    acquired_cumsum = funds_per_round.loc['acquired'] \
+                        .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
 
-                acquired_cumsum = funds_per_round.loc['acquired'] \
-                    .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
-
-                plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+                    plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
 
 
-                plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+                    plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
 
-                funds_per_round = funds_per_round.reset_index()
+                    funds_per_round = funds_per_round.reset_index()
 
-                # Extract the time between founded and funded and raised amount data
-                time_data = acquired_data['time_between_founded_funded_at']
-                raised_data = acquired_data['raised_amount_usd']
+                    # Extract the time between founded and funded and raised amount data
+                    time_data = acquired_data['time_between_founded_funded_at']
+                    raised_data = acquired_data['raised_amount_usd']
 
-                # Create a figure and axes
-                fig, ax = plt.subplots()
+                    # Create a figure and axes
+                    fig, ax = plt.subplots()
 
-                # Create a bar chart for time data
-                ax.bar(range(len(time_data)), time_data.values)
+                    # Create a bar chart for time data
+                    ax.bar(range(len(time_data)), time_data.values)
 
-                # Set the x-tick labels
-                ax.set_xticks(range(len(time_data)))
-                #ax.set_xticklabels(time_data.index)
+                    # Set the x-tick labels
+                    ax.set_xticks(range(len(time_data)))
+                    #ax.set_xticklabels(time_data.index)
 
-                # Set the y-axis label
-                ax.set_ylabel('Time between founded and funded')
+                    # Set the y-axis label
+                    ax.set_ylabel('Time between founded and funded')
 
-                # Create a second y-axis for raised amount data
-                ax2 = ax.twinx()
-                #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
+                    # Create a second y-axis for raised amount data
+                    ax2 = ax.twinx()
+                    #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
 
-                # Set the y-axis label for the second y-axis
-                ax2.set_ylabel('Raised amount (USD)')
+                    # Set the y-axis label for the second y-axis
+                    ax2.set_ylabel('Raised amount (USD)')
 
-                # Set the title
-                ax.set_title('Funding data for companies with final status = acquired')
+                    # Set the title
+                    ax.set_title('Funding data for companies with final status = acquired')
 
-                # Show the plot
-                #plt.show()
-                st.pyplot(fig)
+                    # Show the plot
+                    #plt.show()
+                    st.pyplot(fig)
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
@@ -256,9 +255,73 @@ elif selected == "Prediction Input":
                 prediction_value = response.json()['value'][0]
                 print(prediction)
                 if prediction_value == 1:
-                    st.success("The status is still operational, however we think it will be a success!")
+                    st.success("We think your startup will be a success! For better reference, look at the mean amount of funds for successful projects from your industry.")
                 elif prediction_value == 0:
-                    st.error("The status is still operational, however we think might be failing...")
+                    st.error("We think your startup might be failing at the moment... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
+                dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
+                analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
+                df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
+                print(df1.head(10))
+                # Generate some example data
+
+                df1_software = df1[df1["Industry_Group_x"] == industry_category]
+
+                final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
+
+                final_status.name = 'final status'
+
+                df1_software = df1_software.join(final_status, on='company_name')
+
+                funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
+                    {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
+                )
+                # Select the data for final status = acquired
+                acquired_data = funds_per_round.loc['acquired']
+
+                # Extract the time between founded and funded and raised amount data
+                time_data = acquired_data['time_between_founded_funded_at']
+                raised_data = acquired_data['raised_amount_usd']
+
+                acquired_cumsum = funds_per_round.loc['acquired'] \
+                    .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
+
+                plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+
+                plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+                funds_per_round = funds_per_round.reset_index()
+
+                # Extract the time between founded and funded and raised amount data
+                time_data = acquired_data['time_between_founded_funded_at']
+                raised_data = acquired_data['raised_amount_usd']
+
+                # Create a figure and axes
+                fig, ax = plt.subplots()
+
+                # Create a bar chart for time data
+                ax.bar(range(len(time_data)), time_data.values)
+
+                # Set the x-tick labels
+                ax.set_xticks(range(len(time_data)))
+                #ax.set_xticklabels(time_data.index)
+
+                # Set the y-axis label
+                ax.set_ylabel('Time between founded and funded')
+
+                # Create a second y-axis for raised amount data
+                ax2 = ax.twinx()
+                #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
+
+                # Set the y-axis label for the second y-axis
+                ax2.set_ylabel('Raised amount (USD)')
+
+                # Set the title
+                ax.set_title('Funding data for companies with final status = acquired')
+
+                # Show the plot
+                #plt.show()
+                st.pyplot(fig)
             else:
                 st.error("Error fetching prediction from the API")
 elif selected == "Forecast Input":
@@ -354,17 +417,102 @@ elif selected == "Forecast Input":
 
         url = "https://triumph-venture-fn7ljr6k4q-lz.a.run.app/predict"
 
-        list_of_results = []
+        if st.button("Success forecast"):
+            list_of_results = []
 
-        for n in range(0,6):
-            check = preproc_input(prediction_interp(list_of_round_dates, list_of_round_funds, api_input).drop(columns=['date']).iloc[0].to_dict())
-            response = requests.get(url, params=check)
-            list_of_results.append(response.json()['value'][0])
+            for n in range(0,5):
+                check = preproc_input(prediction_interp(list_of_round_dates, list_of_round_funds, api_input).drop(columns=['date']).iloc[n].to_dict())
+                response = requests.get(url, params=check)
+                list_of_results.append(response.json()['value'][0])
 
-        print(list_of_round_dates)
-        print(list_of_round_funds)
-        print(prediction_interp(list_of_round_dates, list_of_round_funds, api_input))
-        st.success(list_of_results)
+            list_of_future_dates = pd.to_datetime(prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['date'].to_list(), format='%Y-%m-%d').values.astype(np.int64) // 10**9
+            list_of_future_dates = list_of_future_dates//(60*60*24)
+            list_current_dates = pd.to_datetime(list_of_round_dates, format='%Y-%m-%d').values.astype(np.int64) // 10**9
+            list_current_dates = list_current_dates//(60*60*24)
+            last_current_date = list_current_dates[-1]
+            list_days_till_forecast = list_of_future_dates - last_current_date
+
+            #print(list_of_round_dates)
+            #print(list_of_round_funds)
+            #st.success(prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['date'])
+            #st.success(list_of_results)
+            #st.success(list_days_till_forecast)
+            #print(prediction_interp(list_of_round_dates, list_of_round_funds, api_input))
+
+
+            first_success_index = list_of_results.index(1) if 1 in list_of_results else len(list_of_results)
+
+            #print(first_success_index)
+
+            if first_success_index == len(list_of_results):
+                st.error("You should significantly increase the funds you receive in the following rounds. Look at the mean amount of funds for successful projects from your industry.")
+            elif first_success_index != len(list_of_results):
+                st.success(f"You're on the right way. If all goes as before, you can become successful within {list_days_till_forecast[first_success_index]} days. For better reference, look at the mean amount of funds for successful projects from your industry.")
+
+            dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
+            analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
+            df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
+            #print(df1.head(10))
+            # Generate some example data
+
+            df1_software = df1[df1["Industry_Group_x"] == industry_category]
+
+            final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
+
+            final_status.name = 'final status'
+
+            df1_software = df1_software.join(final_status, on='company_name')
+
+            funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
+                {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
+            )
+            # Select the data for final status = acquired
+            acquired_data = funds_per_round.loc['acquired']
+
+            # Extract the time between founded and funded and raised amount data
+            time_data = acquired_data['time_between_founded_funded_at']
+            raised_data = acquired_data['raised_amount_usd']
+
+            acquired_cumsum = funds_per_round.loc['acquired'] \
+                .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
+
+            plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+
+            plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+            funds_per_round = funds_per_round.reset_index()
+
+            # Extract the time between founded and funded and raised amount data
+            time_data = acquired_data['time_between_founded_funded_at']
+            raised_data = acquired_data['raised_amount_usd']
+
+            # Create a figure and axes
+            fig, ax = plt.subplots()
+
+            # Create a bar chart for time data
+            ax.bar(range(len(time_data)), time_data.values)
+
+            # Set the x-tick labels
+            ax.set_xticks(range(len(time_data)))
+            #ax.set_xticklabels(time_data.index)
+
+            # Set the y-axis label
+            ax.set_ylabel('Time between founded and funded')
+
+            # Create a second y-axis for raised amount data
+            ax2 = ax.twinx()
+            #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
+
+            # Set the y-axis label for the second y-axis
+            ax2.set_ylabel('Raised amount (USD)')
+
+            # Set the title
+            ax.set_title('Funding data for companies with final status = acquired')
+
+            # Show the plot
+            #plt.show()
+            st.pyplot(fig)
 
         # check = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)
 
@@ -426,111 +574,108 @@ elif selected == "Forecast Input":
         #     st.pyplot(fig)
 
         #     st.success(list_of_results)
-#elif selected == "Visualization":
-    #st.title(f"You are now on {selected}")
-    # Add your Visualization page content here.
-elif selected == "Visualization":
-    st.title(f"You are now on {selected}")
-    dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
-    analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
-    df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
-    print(df1.head(10))
-    # Generate some example data
+# elif selected == "Visualization":
+#     st.title(f"You are now on {selected}")
+#     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
+#     analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
+#     df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
+#     print(df1.head(10))
+#     # Generate some example data
 
-    df1_software = df1[df1["Industry_Group_x"] == 'Software']
+#     df1_software = df1[df1["Industry_Group_x"] == 'Software']
 
-    final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
+#     final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
 
-    final_status.name = 'final status'
+#     final_status.name = 'final status'
 
-    df1_software = df1_software.join(final_status, on='company_name')
+#     df1_software = df1_software.join(final_status, on='company_name')
 
-    funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
-        {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
-    )
-    # Select the data for final status = acquired
-    acquired_data = funds_per_round.loc['acquired']
+#     funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
+#         {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
+#     )
+#     # Select the data for final status = acquired
+#     acquired_data = funds_per_round.loc['acquired']
 
-    # Extract the time between founded and funded and raised amount data
-    time_data = acquired_data['time_between_founded_funded_at']
-    raised_data = acquired_data['raised_amount_usd']
+#     # Extract the time between founded and funded and raised amount data
+#     time_data = acquired_data['time_between_founded_funded_at']
+#     raised_data = acquired_data['raised_amount_usd']
 
-    acquired_cumsum = funds_per_round.loc['acquired'] \
-        .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
+#     acquired_cumsum = funds_per_round.loc['acquired'] \
+#         .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
 
-    plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+#     plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
 
 
-    plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+#     plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
 
-    funds_per_round = funds_per_round.reset_index()
+#     funds_per_round = funds_per_round.reset_index()
 
-    # Extract the time between founded and funded and raised amount data
-    time_data = acquired_data['time_between_founded_funded_at']
-    raised_data = acquired_data['raised_amount_usd']
+#     # Extract the time between founded and funded and raised amount data
+#     time_data = acquired_data['time_between_founded_funded_at']
+#     raised_data = acquired_data['raised_amount_usd']
 
-    # Create a figure and axes
-    fig, ax = plt.subplots()
+#     # Create a figure and axes
+#     fig, ax = plt.subplots()
 
-    # Create a bar chart for time data
-    ax.bar(range(len(time_data)), time_data.values)
+#     # Create a bar chart for time data
+#     ax.bar(range(len(time_data)), time_data.values)
 
-    # Set the x-tick labels
-    ax.set_xticks(range(len(time_data)))
-    #ax.set_xticklabels(time_data.index)
+#     # Set the x-tick labels
+#     ax.set_xticks(range(len(time_data)))
+#     #ax.set_xticklabels(time_data.index)
 
-    # Set the y-axis label
-    ax.set_ylabel('Time between founded and funded')
+#     # Set the y-axis label
+#     ax.set_ylabel('Time between founded and funded')
 
-    # Create a second y-axis for raised amount data
-    ax2 = ax.twinx()
-    #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
+#     # Create a second y-axis for raised amount data
+#     ax2 = ax.twinx()
+#     #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
 
-    # Set the y-axis label for the second y-axis
-    ax2.set_ylabel('Raised amount (USD)')
+#     # Set the y-axis label for the second y-axis
+#     ax2.set_ylabel('Raised amount (USD)')
 
-    # Set the title
-    ax.set_title('Funding data for companies with final status = acquired')
+#     # Set the title
+#     ax.set_title('Funding data for companies with final status = acquired')
 
-    # Show the plot
-    #plt.show()
-    st.pyplot(fig)
-
-
-    @st.cache_resource
-    def get_plotly_data():
-
-        z_data = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/api_docs/mt_bruno_elevation.csv')
-        z = z_data.values
-        sh_0, sh_1 = z.shape
-        x, y = np.linspace(0, 1, sh_0), np.linspace(0, 1, sh_1)
-        return x, y, z
-
-    import plotly.graph_objects as go
-
-    x, y, z = get_plotly_data()
-
-    fig = go.Figure(data=[go.Surface(z=z, x=x, y=y)])
-    fig.update_layout(title='IRR', autosize=False, width=800, height=800, margin=dict(l=40, r=40, b=40, t=40))
-    st.plotly_chart(fig)
+#     # Show the plot
+#     #plt.show()
+#     st.pyplot(fig)
 
 
-    @st.cache_resource
-    def get_altair_data():
+#     @st.cache_resource
+#     def get_plotly_data():
 
-        return pd.DataFrame(
-                np.random.randn(200, 3),
-                columns=['a', 'b', 'c']
-            )
+#         z_data = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/api_docs/mt_bruno_elevation.csv')
+#         z = z_data.values
+#         sh_0, sh_1 = z.shape
+#         x, y = np.linspace(0, 1, sh_0), np.linspace(0, 1, sh_1)
+#         return x, y, z
 
-    import altair as alt
+#     import plotly.graph_objects as go
 
-    df = get_altair_data()
+#     x, y, z = get_plotly_data()
 
-    c = alt.Chart(df).mark_circle().encode(
-        x='a', y='b', size='c', color='c', tooltip=['a', 'b', 'c'])
+#     fig = go.Figure(data=[go.Surface(z=z, x=x, y=y)])
+#     fig.update_layout(title='IRR', autosize=False, width=800, height=800, margin=dict(l=40, r=40, b=40, t=40))
+#     st.plotly_chart(fig)
 
-    st.write(c)
+
+#     @st.cache_resource
+#     def get_altair_data():
+
+#         return pd.DataFrame(
+#                 np.random.randn(200, 3),
+#                 columns=['a', 'b', 'c']
+#             )
+
+#     import altair as alt
+
+#     df = get_altair_data()
+
+#     c = alt.Chart(df).mark_circle().encode(
+#         x='a', y='b', size='c', color='c', tooltip=['a', 'b', 'c'])
+
+#     st.write(c)
 elif selected == "Upload CSV":
     st.title(f"You have selected {selected}")
 
