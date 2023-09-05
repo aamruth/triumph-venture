@@ -4,28 +4,8 @@ import datetime
 import requests
 import pandas as pd
 
-def preproc_input(input_dict):
-    data = pd.DataFrame(input_dict, index=[0])
-    list_of_ind = ['Industry_Group_Biotechnology', 'Industry_Group_Commerce_and_Shopping',
-                    'Industry_Group_Community_and_Lifestyle',
-                    'Industry_Group_Health_Care',
-                    'Industry_Group_Information_Technology',
-                    'Industry_Group_Internet_Services',
-                    'Industry_Group_Other',
-                    'Industry_Group_Software']
-    list_of_ind_stripped = ['Biotechnology', 'Commerce and Shopping',
-                    'Community and Lifestyle',
-                    'Health Care',
-                    'Information Technology',
-                    'Internet Services',
-                    'Other',
-                    'Software']
-    for industry in list_of_ind:
-        data[industry] = 0.0
-    for industry in list_of_ind_stripped:
-        if data['Industry_Group'][0] == industry:
-            data[f'Industry_Group_{industry.replace(" ", "_")}'] = 1.0
-    return data.drop(columns=['Industry_Group']).iloc[0].to_dict()
+from methods.preprocess_input import preproc_input
+list_of_names = pd.read_csv('data/company_names.csv', encoding= 'unicode_escape')['0'].to_list()
 
 
 with st.sidebar:
@@ -64,7 +44,8 @@ if selected == "Home":
              "understanding of the factors affecting venture success.")
 elif selected == "Prediction Input":
     #st.title(f"You are now on {selected}")
-    search_query = st.text_input("Search for a company")
+    #search_query = st.text_input("Search for a company")
+    search_query = st.selectbox("Select Company", list_of_names)
     # Button to trigger API request
     api_company_url = st.secrets.google_name.key_search
 
@@ -77,42 +58,28 @@ elif selected == "Prediction Input":
 
 
                 result = response.json()
-                print(result)
-                # Display the result from the API
-                # Display the API response data
-                st.subheader("Company Information:")
-                st.write(f"Name: {result['name']}")
-                st.write(f"Status: {result['status']}")
-                st.write(f"Industry Group: {result['Industry_Group']}")
-                st.write(f"Country Code: {result['country_code']}")
-                st.write(f"Funding Total (USD): {result['funding_total_usd']}")
-                st.write(f"Days in Business: {result['days_in_business']}")
-                st.write(f"Funding Rounds: {result['funding_rounds']}")
-                st.write(f"Time Between First and Last Funding: {result['time_between_first_last_funding']}")
-                # Display other relevant information from the API
+                #print(result)
 
-                del result['name']
-                del result['status']
-
-                if st.button("Predict success"):
+                if (result['status'] == 'acquired'):
+                    st.success("The status of the company is acquired, so it can be considered successful!")
+                elif (result['status'] == 'closed'):
+                    st.error("The status of the company is closed. Unfortunately, it failed...")
+                elif (result['status'] == 'operating'):
+                    del result['name']
+                    del result['status']
+                    #print(result)
+                    #print(preproc_input(result))
                     url = st.secrets.google_api.key
-                    response = requests.get(url, params=preproc_input(result))
-                    result_dict = preproc_input(result)
-
-                    # Print the values of the dictionary
-                    print(result_dict.values())
-                    if response.status_code == 200:
-                        prediction = response.json()#['status_code']
-                        print(prediction)
-                        st.success(f"Predicted rate of success: {prediction}")
-
-                    else:
-                        st.error("Error fetching prediction from the API")
+                    response = requests.get(url, params=preproc_input(result)).json()['value'][0]
+                    if response == 1:
+                        st.success("The status is still operational, however we think it will be a success!")
+                    elif response == 0:
+                        st.error("The status is still operational, however we think might be failing...")
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
         st.warning("Please enter a company name or input your company data manually.")
-    #print(result)
+
 # Make API request
 
 
@@ -216,9 +183,12 @@ elif selected == "Prediction Input":
             print(result_dict.values())
             if response.status_code == 200:
                 prediction = response.json()#['status_code']
+                prediction_value = response.json()['value'][0]
                 print(prediction)
-                st.success(f"Predicted rate of success: {prediction}")
-
+                if prediction_value == 1:
+                    st.success("We think your company is going to be successful!")
+                elif prediction_value == 0:
+                    st.error("Unfortunately, We think your company is going to be a failure!")
             else:
                 st.error("Error fetching prediction from the API")
 
