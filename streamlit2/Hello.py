@@ -191,7 +191,7 @@ elif selected == "Prediction Input":
                 if prediction_value == 1:
                     st.success("We think your company is going to be successful!")
                 elif prediction_value == 0:
-                    st.error("Unfortunately, We think your company is going to be a failure!")
+                    st.error("Unfortunately, we think your company is going to be a failure!")
             else:
                 st.error("Error fetching prediction from the API")
 
