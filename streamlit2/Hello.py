@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from methods.preprocess_input import preproc_input
-list_of_names = pd.read_csv('data/company_names.csv', encoding= 'unicode_escape')['0'].to_list()
+list_of_names = pd.read_csv('../data/company_names.csv', encoding='unicode_escape')['0'].to_list()
 
 
 with st.sidebar:
