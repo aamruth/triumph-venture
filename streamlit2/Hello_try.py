@@ -2,35 +2,13 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import datetime
 import requests
-import pandas as pd
-import statsmodels.api as sm
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
-
-
-def preproc_input(input_dict):
-    data = pd.DataFrame(input_dict, index=[0])
-    list_of_ind = ['Industry_Group_Biotechnology', 'Industry_Group_Commerce_and_Shopping',
-                'Industry_Group_Community_and_Lifestyle',
-                'Industry_Group_Health_Care',
-                    'Industry_Group_Information_Technology',
-                    'Industry_Group_Internet_Services',
-                    'Industry_Group_Other',
-                    'Industry_Group_Software']
-    list_of_ind_stripped = ['Biotechnology', 'Commerce and Shopping',
-                'Community and Lifestyle',
-                'Health Care',
-                    'Information Technology',
-                    'Internet Services',
-                    'Other',
-                    'Software']
-    for industry in list_of_ind:
-        data[industry] = 0.0
-    for industry in list_of_ind_stripped:
-        if data['Industry_Group'][0] == industry:
-            data[f'Industry_Group_{industry.replace(" ", "_")}'] = 1.0
-    return data.drop(columns=['Industry_Group']).iloc[0].to_dict()
-
+#import pandas as pd
+#import statsmodels.api as sm
+#import matplotlib.pyplot as plt
+#from scipy.interpolate import interp1d
+#import numpy as np
+from methods.prediction_interp import prediction_interp
+from methods.preprocess_input import preproc_input
 
 with st.sidebar:
     selected = option_menu(
@@ -270,57 +248,6 @@ elif selected == "Forecast Input":
             "founded_date": founding_date
         }
 
-        def prediction_interp(date_strings, rounds_funds, inp_params):
-
-            len_r = len(rounds_funds)
-
-            cum_list = [sum(rounds_funds[0:x:1]) for x in range(0, len_r+1)]
-
-            cumulative_sum = cum_list[1:]
-
-            # Convert the list of strings to a DatetimeIndex
-            date_index = pd.to_datetime(date_strings, format='%Y-%m-%d')
-
-            founded_date = pd.to_datetime(inp_params["founded_date"], format='%Y-%m-%d')
-
-            # Sample input data (replace with your own data)
-            data = {
-                "date": date_index,
-                "amount": cumulative_sum,
-            }
-
-            # Convert dates to numerical values (e.g., timestamps)
-            numeric_dates = [data.index[m]['date'] for m in range(0,len(rounds_funds))]
-
-            # Create an interpolation function
-            interp_func = interp1d(numeric_dates, cumulative_sum, kind='linear')
-
-            future_dates = pd.date_range(start=data.index[-1]['date'] + pd.DateOffset(months=6), periods=5, freq="6M")
-
-            # Define a date for forecasting
-            forecast_date = future_dates.timestamp()
-
-            # Use the interpolation function to forecast the value
-            forecast_values = interp_func(forecast_date)
-
-            # Create a DataFrame for the forecast
-            forecast_df = pd.DataFrame({"date": future_dates, "funding_total_usd": forecast_values})
-
-            forecast_df['Industry_Group'] = inp_params['Industry_Group']
-
-            forecast_df['country_code'] = inp_params['country_code']
-
-            forecast_df['time_between_first_last_funding'] = (pd.to_datetime(forecast_df['date'], format='%Y-%m-%d') - date_index[0]).dt.days
-
-            forecast_df['days_in_business'] = (pd.to_datetime(forecast_df['date'], format='%Y-%m-%d') - founded_date).dt.days
-
-            number_of_rounds = [*range(inp_params["funding_rounds"]+1,inp_params["funding_rounds"] + 6)]
-
-            forecast_df["funding_rounds"] = number_of_rounds
-
-            return forecast_df.reset_index(drop=True)
-
-
         # Collect API input
         #api_input = {
         #    "Industry_Group": industry_category,          # string
@@ -339,40 +266,43 @@ elif selected == "Forecast Input":
             response = requests.get(url, params=check)
             list_of_results.append(response.json()['value'][0])
 
-        print(list_of_results)
+        print(list_of_round_dates)
+        print(list_of_round_funds)
+        print(prediction_interp(list_of_round_dates, list_of_round_funds, api_input))
+        st.success(list_of_results)
 
 
 
-        # Make API request
-        if st.button("Forecast success"):
+        # # Make API request
+        # if st.button("Forecast success"):
 
-            dates = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['date']
-            money_amounts = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['funding_total_usd']
-            failure_success = list_of_results
+        #     dates = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['date']
+        #     money_amounts = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['funding_total_usd']
+        #     failure_success = list_of_results
 
-            # Find the index of the first success
-            first_success_index = failure_success.index(1) if 1 in failure_success else len(failure_success)
+        #     # Find the index of the first success
+        #     first_success_index = failure_success.index(1) if 1 in failure_success else len(failure_success)
 
-            # Separate data into failure and success portions
-            failure_dates = dates[:first_success_index]
-            failure_amounts = money_amounts[:first_success_index]
+        #     # Separate data into failure and success portions
+        #     failure_dates = dates[:first_success_index]
+        #     failure_amounts = money_amounts[:first_success_index]
 
-            # Create a scatter plot for failures
-            fig, ax = plt.subplots()
-            ax.scatter(failure_dates, failure_amounts, label='Failure', color='red', marker='x')
+        #     # Create a scatter plot for failures
+        #     fig, ax = plt.subplots()
+        #     ax.scatter(failure_dates, failure_amounts, label='Failure', color='red', marker='x')
 
-            # # If there are success data points after the first success, separate and plot them
-            # if first_success_index < len(dates):
-            #     success_dates = dates[first_success_index]
-            #     success_amounts = money_amounts[first_success_index]
-            #     fig = plt.scatter(success_dates, success_amounts, label='Success', color='green', marker='o')
+        #     # # If there are success data points after the first success, separate and plot them
+        #     # if first_success_index < len(dates):
+        #     #     success_dates = dates[first_success_index]
+        #     #     success_amounts = money_amounts[first_success_index]
+        #     #     fig = plt.scatter(success_dates, success_amounts, label='Success', color='green', marker='o')
 
-            # Adding a legend
-            #legend = plt.legend()
+        #     # Adding a legend
+        #     #legend = plt.legend()
 
-            st.pyplot(fig)
+        #     st.pyplot(fig)
 
-            st.success(list_of_results)
+        #     st.success(list_of_results)
 
 elif selected == "Visualization":
     st.title(f"You have selected {selected}")
