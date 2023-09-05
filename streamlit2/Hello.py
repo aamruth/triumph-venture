@@ -3,6 +3,9 @@ from streamlit_option_menu import option_menu
 import datetime
 import requests
 import pandas as pd
+import os
+import matplotlib.pyplot as plt
+import numpy as np
 
 from methods.preprocess_input import preproc_input
 list_of_names = pd.read_csv('data/company_names.csv', encoding= 'unicode_escape')['0'].to_list()
@@ -194,7 +197,20 @@ elif selected == "Prediction Input":
 
 elif selected == "Visualization":
     st.title(f"You are now on {selected}")
-    # Add your Visualization page content here.
+    dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
+    analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
+    data = pd.read_csv(analytics_data_csv, encoding='latin1')
+    print(data.head(10))
+    # Generate some example data
+    x = np.linspace(0, 10, 100)
+    y = np.sin(x)
+
+    # Create a Matplotlib figure and plot the data
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+
+    # Display the plot in Streamlit
+    st.pyplot(fig)
 
 # Close the sidebar
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
