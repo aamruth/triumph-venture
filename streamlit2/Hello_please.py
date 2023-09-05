@@ -203,17 +203,67 @@ elif selected == "Visualization":
     st.title(f"You are now on {selected}")
     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
     analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
-    data = pd.read_csv(analytics_data_csv, encoding='latin1')
-    print(data.head(10))
+    df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
+    print(df1.head(10))
     # Generate some example data
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x)
 
-    # Create a Matplotlib figure and plot the data
+    df1_software = df1[df1["Industry_Group_x"] == 'Software']
+
+    final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
+
+    final_status.name = 'final status'
+
+    df1_software = df1_software.join(final_status, on='company_name')
+
+    funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
+        {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
+    )
+    # Select the data for final status = acquired
+    acquired_data = funds_per_round.loc['acquired']
+
+    # Extract the time between founded and funded and raised amount data
+    time_data = acquired_data['time_between_founded_funded_at']
+    raised_data = acquired_data['raised_amount_usd']
+
+    acquired_cumsum = funds_per_round.loc['acquired'] \
+        .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
+
+    plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+
+    plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+    funds_per_round = funds_per_round.reset_index()
+
+    # Extract the time between founded and funded and raised amount data
+    time_data = acquired_data['time_between_founded_funded_at']
+    raised_data = acquired_data['raised_amount_usd']
+
+    # Create a figure and axes
     fig, ax = plt.subplots()
-    ax.plot(x, y)
 
-    # Display the plot in Streamlit
+    # Create a bar chart for time data
+    ax.bar(range(len(time_data)), time_data.values)
+
+    # Set the x-tick labels
+    ax.set_xticks(range(len(time_data)))
+    #ax.set_xticklabels(time_data.index)
+
+    # Set the y-axis label
+    ax.set_ylabel('Time between founded and funded')
+
+    # Create a second y-axis for raised amount data
+    ax2 = ax.twinx()
+    #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
+
+    # Set the y-axis label for the second y-axis
+    ax2.set_ylabel('Raised amount (USD)')
+
+    # Set the title
+    ax.set_title('Funding data for companies with final status = acquired')
+
+    # Show the plot
+    #plt.show()
     st.pyplot(fig)
 
 
