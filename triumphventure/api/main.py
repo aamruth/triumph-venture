@@ -77,6 +77,24 @@ def read_root(
         name: str
 ):
     companies = pd.read_csv('./triumphventure/data/companies.csv', encoding="utf-8", encoding_errors='replace')
+    company = companies[companies["name"] == name].iloc[0]
+    return {
+        "name": company["name"],
+        "status": company["status"],
+        "Industry_Group": company["Industry_Group"],
+        "country_code": company["country_code"],
+        "funding_total_usd": float(company["funding_total_usd"]),
+        "days_in_business": float(company["days_in_business"]),
+        "funding_rounds": float(company["funding_rounds"]),
+        "time_between_first_last_funding": float(company["time_between_first_last_funding"]),
+    }
+
+
+@app.get("/search_rounds")
+def read_root(
+        name: str
+):
+    companies = pd.read_csv('./triumphventure/data/companies.csv', encoding="utf-8", encoding_errors='replace')
     rounds = pd.read_csv('./triumphventure/data/rounds.csv', encoding="utf-8", encoding_errors='replace')
     company = companies[companies["name"] == name].fillna('').iloc[0]
     company_rounds = rounds[rounds["company_name"] == name].fillna('')
@@ -91,11 +109,11 @@ def read_root(
     return {
         "name": company["name"],
         "status": company["status"],
-        "category_list": company["category_list"],
+        "Industry_Group": company["Industry_Group"],
         "country_code": company["country_code"],
         "funding_total_usd": company["funding_total_usd"],
-        "founded_at": company["founded_at"],
-        "first_funding_at": company["first_funding_at"],
-        "last_funding_at": company["last_funding_at"],
+        "days_in_business": company["days_in_business"],
+        "funding_rounds": company["funding_rounds"],
+        "time_between_first_last_funding": company["time_between_first_last_funding"],
         "rounds": all_rounds,
     }
