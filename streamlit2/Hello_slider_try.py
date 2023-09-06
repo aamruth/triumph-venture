@@ -3,11 +3,9 @@ from streamlit_option_menu import option_menu
 import datetime
 import requests
 import pandas as pd
-import os
-import matplotlib.pyplot as plt
-import numpy as np
 
-
+from methods.preprocess_input import preproc_input
+list_of_names = pd.read_csv('../data/company_names.csv', encoding='unicode_escape')['0'].to_list()
 
 
 with st.sidebar:
@@ -46,9 +44,11 @@ if selected == "Home":
              "understanding of the factors affecting venture success.")
 elif selected == "Prediction Input":
     #st.title(f"You are now on {selected}")
-    search_query = st.text_input("Search for a company")
+    #search_query = st.text_input("Search for a company")
+    search_query = st.selectbox("Select Company", list_of_names)
     # Button to trigger API request
     api_company_url = st.secrets.google_name.key_search
+
     if st.button("Submit company name"):
         if search_query:
             try:
@@ -56,21 +56,32 @@ elif selected == "Prediction Input":
                 payload = {"name": search_query}
                 response = requests.get(api_company_url, params=payload)
 
-                if response.status_code == 200:
-                    result = response.json()
-                    # Display the result from the API
-                    st.success(f"Company Name: {result['name']}")
-                    st.write(f"Status: {result['status']}")
-                    st.write(f"Category List: {result['category_list']}")
-                    st.write(f"Country Code: {result['country_code']}")
-                    st.write(f"Funding Total USD: {result['funding_total_usd']}")
-                    # Display other relevant information from the API
-                else:
-                    st.error("Error fetching data from the API")
+
+                result = response.json()
+                #print(result)
+
+                if (result['status'] == 'acquired'):
+                    st.success("The status of the company is acquired, so it can be considered successful!")
+                elif (result['status'] == 'closed'):
+                    st.error("The status of the company is closed. Unfortunately, it failed...")
+                elif (result['status'] == 'operating'):
+                    del result['name']
+                    del result['status']
+                    #print(result)
+                    #print(preproc_input(result))
+                    url = st.secrets.google_api.key
+                    response = requests.get(url, params=preproc_input(result)).json()['value'][0]
+                    if response == 1:
+                        st.success("The status is still operational, however we think it will be a success!")
+                    elif response == 0:
+                        st.error("The status is still operational, however we think might be failing...")
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
-        st.warning("Please enter a company name or data.")
+        st.warning("Please enter a company name or input your company data manually.")
+
+# Make API request
+
 
     # collapsible box
     st.write("Alternatively, you can enter the company data yourself.")
@@ -160,118 +171,30 @@ elif selected == "Prediction Input":
             "days_in_business": days_in_business,         # int
         }
 
-        def preproc_input(input_dict):
-            data = pd.DataFrame(input_dict, index=[0])
-            list_of_ind = ['Industry_Group_Biotechnology', 'Industry_Group_Commerce_and_Shopping',
-                           'Industry_Group_Community_and_Lifestyle',
-                           'Industry_Group_Health_Care',
-                            'Industry_Group_Information_Technology',
-                            'Industry_Group_Internet_Services',
-                            'Industry_Group_Other',
-                            'Industry_Group_Software']
-            list_of_ind_stripped = ['Biotechnology', 'Commerce and Shopping',
-                           'Community and Lifestyle',
-                           'Health Care',
-                            'Information Technology',
-                            'Internet Services',
-                            'Other',
-                            'Software']
-            for industry in list_of_ind:
-                data[industry] = 0.0
-            for industry in list_of_ind_stripped:
-                if data['Industry_Group'][0] == industry:
-                    data[f'Industry_Group_{industry.replace(" ", "_")}'] = 1.0
-            return data.drop(columns=['Industry_Group']).iloc[0].to_dict()
-
 
         url = st.secrets.google_api.key
         # Make API request
         if st.button("Predict success"):
             url = st.secrets.google_api.key
             response = requests.get(url, params=preproc_input(api_input))
-            print(response)
-            print(url)
             result_dict = preproc_input(api_input)
 
             # Print the values of the dictionary
             print(result_dict.values())
             if response.status_code == 200:
                 prediction = response.json()#['status_code']
+                prediction_value = response.json()['value'][0]
                 print(prediction)
-                st.success(f"Predicted rate of success: {prediction}")
-
+                if prediction_value == 1:
+                    st.success("The status is still operational, however we think it will be a success!")
+                elif prediction_value == 0:
+                    st.error("The status is still operational, however we think your company might be failing...")
             else:
                 st.error("Error fetching prediction from the API")
 
 elif selected == "Visualization":
     st.title(f"You are now on {selected}")
-    dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
-    analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
-    df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
-    print(df1.head(10))
-    # Generate some example data
-
-    df1_software = df1[df1["Industry_Group_x"] == 'Software']
-
-    final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
-
-    final_status.name = 'final status'
-
-    df1_software = df1_software.join(final_status, on='company_name')
-
-    funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
-        {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
-    )
-    # Select the data for final status = acquired
-    acquired_data = funds_per_round.loc['acquired']
-
-    # Extract the time between founded and funded and raised amount data
-    time_data = acquired_data['time_between_founded_funded_at']
-    raised_data = acquired_data['raised_amount_usd']
-
-    acquired_cumsum = funds_per_round.loc['acquired'] \
-        .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
-
-    plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
-
-
-    plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
-
-    funds_per_round = funds_per_round.reset_index()
-
-    # Extract the time between founded and funded and raised amount data
-    time_data = acquired_data['time_between_founded_funded_at']
-    raised_data = acquired_data['raised_amount_usd']
-
-    # Create a figure and axes
-    fig, ax = plt.subplots()
-
-    # Create a bar chart for time data
-    ax.bar(range(len(time_data)), time_data.values)
-
-    # Set the x-tick labels
-    ax.set_xticks(range(len(time_data)))
-    #ax.set_xticklabels(time_data.index)
-
-    # Set the y-axis label
-    ax.set_ylabel('Time between founded and funded')
-
-    # Create a second y-axis for raised amount data
-    ax2 = ax.twinx()
-    #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
-
-    # Set the y-axis label for the second y-axis
-    ax2.set_ylabel('Raised amount (USD)')
-
-    # Set the title
-    ax.set_title('Funding data for companies with final status = acquired')
-
-    # Show the plot
-    #plt.show()
-    st.pyplot(fig)
-
-
-
+    # Add your Visualization page content here.
 
 # Close the sidebar
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
