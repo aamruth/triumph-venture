@@ -57,13 +57,14 @@ def plot_analytics(time_data,raised_data):
 
     # Create a second y-axis for raised amount data
     ax2 = ax.twiny()
-    ax2.scatter(raised_data.values, range(len(raised_data)), color='red', marker='o')
+    ax2.scatter(raised_data.values, range(len(raised_data)), color='red', marker='o',s=100)
 
     # Set the y-axis label for the second y-axis
-    #ax2.set_xlabel('Cummulative Raised amount (USD)')
+    #ax.set_label('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round',fontsize=16)
 
     # Set the title
     ax.set_title('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round', fontsize=16)
+    # Add a legend
 
     # Show the plot
     plt.show()
@@ -131,7 +132,7 @@ elif selected == "Prediction Input":
                         {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
                     )
                     # Select the data for final status = acquired
-                    acquired_data = funds_per_round.loc['acquired']
+                    acquired_data = funds_per_round.loc['acquired'].sort_values(by='time_between_founded_funded_at')
 
                     # Extract the time between founded and funded and raised amount data
                     time_data = acquired_data['time_between_founded_funded_at']
@@ -151,32 +152,7 @@ elif selected == "Prediction Input":
                     time_data = acquired_data['time_between_founded_funded_at']
                     raised_data = acquired_data['raised_amount_usd']
 
-                    # Create a figure and axes
-                    fig, ax = plt.subplots()
-
-                    # Create a bar chart for time data
-                    ax.bar(range(len(time_data)), time_data.values)
-
-                    # Set the x-tick labels
-                    ax.set_xticks(range(len(time_data)))
-                    #ax.set_xticklabels(time_data.index)
-
-                    # Set the y-axis label
-                    ax.set_ylabel('Time between founded and funded')
-
-                    # Create a second y-axis for raised amount data
-                    ax2 = ax.twinx()
-                    #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
-
-                    # Set the y-axis label for the second y-axis
-                    ax2.set_ylabel('Raised amount (USD)')
-
-                    # Set the title
-                    ax.set_title('Funding data for companies with final status = acquired')
-
-                    # Show the plot
-                    #plt.show()
-                    st.pyplot(fig)
+                    plot_analytics(time_data,acquired_cumsum)
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
