@@ -2,13 +2,17 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import datetime
 import requests
-#import pandas as pd
+import pandas as pd
 #import statsmodels.api as sm
 #import matplotlib.pyplot as plt
 #from scipy.interpolate import interp1d
 #import numpy as np
 from methods.prediction_interp import prediction_interp
 from methods.preprocess_input import preproc_input
+
+
+list_of_names = pd.read_csv('data/company_names.csv', encoding= 'unicode_escape')['0'].to_list()
+
 
 with st.sidebar:
     selected = option_menu(

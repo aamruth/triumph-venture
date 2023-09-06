@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from methods.preprocess_input import preproc_input
-list_of_names = pd.read_csv('data/company_names.csv', encoding= 'unicode_escape')['0'].to_list()
+list_of_names = pd.read_csv('../data/company_names.csv', encoding='unicode_escape')['0'].to_list()
 
 
 with st.sidebar:
     selected = option_menu(
         menu_title="Main Menu",
-        options=["Home", "Prediction Input", "Visualization"],
-        icons=["house", "pencil", "graph-up"]
+        options=["Home", "Prediction Input", "Visualization", "Upload CSV"],
+        icons=["house", "pencil", "graph-up","filetype-csv"]
     )
 
 def set_background_image(image_url):
@@ -190,6 +190,10 @@ elif selected == "Prediction Input":
                 print(prediction)
                 if prediction_value == 1:
                     st.success("We think your company is going to be successful!")
+                    st.image(
+            "https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif", # I prefer to load the GIFs using GIPHY
+            width=400, # The actual size of most gifs on GIPHY are really small, and using the column-width parameter would make it weirdly big. So I would suggest adjusting the width manually!
+        )
                 elif prediction_value == 0:
                     st.error("Unfortunately, we think your company is going to be a failure!")
             else:
@@ -199,19 +203,123 @@ elif selected == "Visualization":
     st.title(f"You are now on {selected}")
     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
     analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
-    data = pd.read_csv(analytics_data_csv, encoding='latin1')
-    print(data.head(10))
+    df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
+    print(df1.head(10))
     # Generate some example data
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x)
 
-    # Create a Matplotlib figure and plot the data
+    df1_software = df1[df1["Industry_Group_x"] == 'Software']
+
+    final_status = df1_software.sort_values('funded_at', ascending=False).groupby('company_name')['status'].last()
+
+    final_status.name = 'final status'
+
+    df1_software = df1_software.join(final_status, on='company_name')
+
+    funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
+        {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
+    )
+    # Select the data for final status = acquired
+    acquired_data = funds_per_round.loc['acquired']
+
+    # Extract the time between founded and funded and raised amount data
+    time_data = acquired_data['time_between_founded_funded_at']
+    raised_data = acquired_data['raised_amount_usd']
+
+    acquired_cumsum = funds_per_round.loc['acquired'] \
+        .sort_values("time_between_founded_funded_at", ascending=True)['raised_amount_usd'].cumsum()
+
+    plt.plot(funds_per_round.loc['acquired', 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+
+    plt.scatter(funds_per_round.loc["acquired", 'time_between_founded_funded_at'].sort_values(), acquired_cumsum)
+
+    funds_per_round = funds_per_round.reset_index()
+
+    # Extract the time between founded and funded and raised amount data
+    time_data = acquired_data['time_between_founded_funded_at']
+    raised_data = acquired_data['raised_amount_usd']
+
+    # Create a figure and axes
     fig, ax = plt.subplots()
-    ax.plot(x, y)
 
-    # Display the plot in Streamlit
+    # Create a bar chart for time data
+    ax.bar(range(len(time_data)), time_data.values)
+
+    # Set the x-tick labels
+    ax.set_xticks(range(len(time_data)))
+    #ax.set_xticklabels(time_data.index)
+
+    # Set the y-axis label
+    ax.set_ylabel('Time between founded and funded')
+
+    # Create a second y-axis for raised amount data
+    ax2 = ax.twinx()
+    #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
+
+    # Set the y-axis label for the second y-axis
+    ax2.set_ylabel('Raised amount (USD)')
+
+    # Set the title
+    ax.set_title('Funding data for companies with final status = acquired')
+
+    # Show the plot
+    #plt.show()
     st.pyplot(fig)
 
+
+    @st.cache_resource
+    def get_plotly_data():
+
+        z_data = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/api_docs/mt_bruno_elevation.csv')
+        z = z_data.values
+        sh_0, sh_1 = z.shape
+        x, y = np.linspace(0, 1, sh_0), np.linspace(0, 1, sh_1)
+        return x, y, z
+
+    import plotly.graph_objects as go
+
+    x, y, z = get_plotly_data()
+
+    fig = go.Figure(data=[go.Surface(z=z, x=x, y=y)])
+    fig.update_layout(title='IRR', autosize=False, width=800, height=800, margin=dict(l=40, r=40, b=40, t=40))
+    st.plotly_chart(fig)
+
+
+    @st.cache_resource
+    def get_altair_data():
+
+        return pd.DataFrame(
+                np.random.randn(200, 3),
+                columns=['a', 'b', 'c']
+            )
+
+    import altair as alt
+
+    df = get_altair_data()
+
+    c = alt.Chart(df).mark_circle().encode(
+        x='a', y='b', size='c', color='c', tooltip=['a', 'b', 'c'])
+
+    st.write(c)
+elif selected == "Upload CSV":
+    st.title(f"You have selected {selected}")
+
+    st.write("Please upload your CSV file below:")
+    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+
+    if uploaded_file is not None:
+        try:
+            # Read the uploaded CSV file
+            df = pd.read_csv(uploaded_file)
+
+            # Display the first few rows of the uploaded data
+            st.write("Uploaded data:")
+            st.write(df.head())
+
+            # You can perform further data analysis or visualization here
+
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
 # Close the sidebar
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
