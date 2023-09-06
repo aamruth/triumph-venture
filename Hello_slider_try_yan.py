@@ -464,10 +464,11 @@ elif selected == "Forecast Input":
             df1_software = df1_software.join(final_status, on='company_name')
 
             funds_per_round = df1_software.groupby(by=['final status', 'funding_round_code']).agg(
-                {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
-            )
+    {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'})
+
+
             # Select the data for final status = acquired
-            acquired_data = funds_per_round.loc['acquired']
+            acquired_data = funds_per_round.loc['acquired'].sort_values(by='time_between_founded_funded_at')
 
             # Extract the time between founded and funded and raised amount data
             time_data = acquired_data['time_between_founded_funded_at']
@@ -486,9 +487,9 @@ elif selected == "Forecast Input":
             # Extract the time between founded and funded and raised amount data
             time_data = acquired_data['time_between_founded_funded_at']
             raised_data = acquired_data['raised_amount_usd']
-            newlist = []
+            rounds = []
             for element in list(time_data.index):
-                newlist.append(" ".join(element.split("_")).capitalize())
+                rounds.append(" ".join(element.split("_")).capitalize())
 
 
                         # Create a figure and axes
@@ -499,20 +500,20 @@ elif selected == "Forecast Input":
 
             # Set the y-tick labels
             ax.set_yticks(range(len(time_data)))
-            ax.set_yticklabels(newlist, fontsize=16);
+            ax.set_yticklabels(rounds, fontsize=16);
 
             # Set the x-axis label
-            ax.set_xlabel('Time between founded and funded')
+            ax.set_xlabel('Days lived by Startup', fontsize=16)
 
             # Create a second y-axis for raised amount data
             ax2 = ax.twiny()
-            ax2.plot(raised_data.values, range(len(raised_data)), color='red', marker='o')
+            ax2.scatter(raised_data.values, range(len(raised_data)), color='red', marker='o')
 
             # Set the y-axis label for the second y-axis
             #ax2.set_xlabel('Raised amount (USD)')
 
             # Set the title
-            ax.set_title('Funding data for companies with final status = acquired')
+            ax.set_title('Funds raised by Acquired Startup(USD)', fontsize=16)
 
             # Show the plot
             plt.show()
