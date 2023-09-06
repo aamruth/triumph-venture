@@ -111,9 +111,9 @@ elif selected == "Prediction Input":
                     url = st.secrets.google_api.key
                     response = requests.get(url, params=preproc_input(result)).json()['value'][0]
                     if response == 1:
-                        st.success("The status is still operational. However, we think it will be a success! For better reference, look at the mean amount of funds for successful projects from your industry.")
+                        st.success("The status is as of 2014 still operational. However, we think it will be a success! For better reference, look at the mean amount of funds for successful projects from your industry.")
                     elif response == 0:
-                        st.error("The status is still operational. However, we think it might be failing... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
+                        st.error("The status is still operational as of 2014. However, we think it might be failing... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
                     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
                     analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
                     df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
