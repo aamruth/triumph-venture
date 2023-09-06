@@ -36,6 +36,39 @@ def set_background_image(image_url):
         unsafe_allow_html=True,
     )
 # sections
+def plot_analytics(time_data,raised_data):
+    rounds = []
+    for element in list(time_data.index):
+        rounds.append(" ".join(element.split("_")).capitalize())
+
+
+                # Create a figure and axes
+    fig, ax = plt.subplots(figsize=(14,8))
+    year_data = time_data / 365.25
+    # Create a bar chart for time data
+    ax.barh(range(len(year_data)), year_data.values)
+
+    # Set the y-tick labels
+    ax.set_yticks(range(len(year_data)))
+    ax.set_yticklabels(rounds, fontsize=16);
+
+    # Set the x-axis label
+    ax.set_xlabel('Years lived by Startup at of each round', fontsize=16)
+
+    # Create a second y-axis for raised amount data
+    ax2 = ax.twiny()
+    ax2.scatter(raised_data.values, range(len(raised_data)), color='red', marker='o')
+
+    # Set the y-axis label for the second y-axis
+    #ax2.set_xlabel('Cummulative Raised amount (USD)')
+
+    # Set the title
+    ax.set_title('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round', fontsize=16)
+
+    # Show the plot
+    plt.show()
+
+    st.pyplot(fig)
 if selected == "Home":
     #st.title(f"You are now on {selected}")
     st.title(f"Welcome to the Le Wagon Berlin Data Science Batch 1307 Venture Success Prediction Website")
@@ -276,7 +309,7 @@ elif selected == "Prediction Input":
                     {'time_between_founded_funded_at': "mean", "raised_amount_usd": 'mean'}
                 )
                 # Select the data for final status = acquired
-                acquired_data = funds_per_round.loc['acquired']
+                acquired_data = funds_per_round.loc['acquired'].sort_values(by='time_between_founded_funded_at')
 
                 # Extract the time between founded and funded and raised amount data
                 time_data = acquired_data['time_between_founded_funded_at']
@@ -296,32 +329,7 @@ elif selected == "Prediction Input":
                 time_data = acquired_data['time_between_founded_funded_at']
                 raised_data = acquired_data['raised_amount_usd']
 
-                # Create a figure and axes
-                fig, ax = plt.subplots()
-
-                # Create a bar chart for time data
-                ax.bar(range(len(time_data)), time_data.values)
-
-                # Set the x-tick labels
-                ax.set_xticks(range(len(time_data)))
-                #ax.set_xticklabels(time_data.index)
-
-                # Set the y-axis label
-                ax.set_ylabel('Time between founded and funded')
-
-                # Create a second y-axis for raised amount data
-                ax2 = ax.twinx()
-                #ax2.plot(range(len(raised_data)), raised_data.values, color='red', marker='o')
-
-                # Set the y-axis label for the second y-axis
-                ax2.set_ylabel('Raised amount (USD)')
-
-                # Set the title
-                ax.set_title('Funding data for companies with final status = acquired')
-
-                # Show the plot
-                #plt.show()
-                st.pyplot(fig)
+                plot_analytics(time_data,acquired_cumsum)
             else:
                 st.error("Error fetching prediction from the API")
 elif selected == "Forecast Input":
@@ -487,38 +495,9 @@ elif selected == "Forecast Input":
             # Extract the time between founded and funded and raised amount data
             time_data = acquired_data['time_between_founded_funded_at']
             raised_data = acquired_data['raised_amount_usd']
-            rounds = []
-            for element in list(time_data.index):
-                rounds.append(" ".join(element.split("_")).capitalize())
 
+            plot_analytics(time_data,acquired_cumsum)
 
-                        # Create a figure and axes
-            fig, ax = plt.subplots(figsize=(14,8))
-
-            # Create a bar chart for time data
-            ax.barh(range(len(time_data)), time_data.values)
-
-            # Set the y-tick labels
-            ax.set_yticks(range(len(time_data)))
-            ax.set_yticklabels(rounds, fontsize=16);
-
-            # Set the x-axis label
-            ax.set_xlabel('Days lived by Startup', fontsize=16)
-
-            # Create a second y-axis for raised amount data
-            ax2 = ax.twiny()
-            ax2.scatter(raised_data.values, range(len(raised_data)), color='red', marker='o')
-
-            # Set the y-axis label for the second y-axis
-            #ax2.set_xlabel('Raised amount (USD)')
-
-            # Set the title
-            ax.set_title('Funds raised by Acquired Startup(USD)', fontsize=16)
-
-            # Show the plot
-            plt.show()
-
-            st.pyplot(fig)
 
         # check = prediction_interp(list_of_round_dates, list_of_round_funds, api_input)
 
@@ -580,6 +559,7 @@ elif selected == "Forecast Input":
         #     st.pyplot(fig)
 
         #     st.success(list_of_results)
+
 # elif selected == "Visualization":
 #     st.title(f"You are now on {selected}")
 #     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
