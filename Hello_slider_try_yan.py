@@ -388,12 +388,8 @@ elif selected == "Forecast Input":
         for n_round in range(1, investment_round_label + 1):
             round_date = st.date_input(f'Date of round {n_round}', format="YYYY/MM/DD")
             round_money = st.number_input(f'Round {n_round} Investments (USD)', min_value=0.0)
-            # Check if the date in the first input is later than the date in the second input
-            if n_round > 1 and round_date <= list_of_round_dates[n_round - 2]:
-                st.error(f'Date of round {n_round} must be later than the previous round.')
-            else:
-                list_of_round_dates.append(round_date)
-                list_of_round_funds.append(round_money)
+            list_of_round_dates.append(round_date)
+            list_of_round_funds.append(round_money)
 
                 # Collect API input
         api_input = {
