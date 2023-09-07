@@ -87,7 +87,7 @@ elif selected == "Prediction Input":
     # Button to trigger API request
     api_company_url = st.secrets.google_name.key_search
 
-    if st.button("Submit"):
+    if st.button("Submit company name"):
         if search_query:
             try:
                 # Send the search_query to your API
@@ -365,21 +365,20 @@ elif selected == "Forecast Input":
 
         # Mapping of slider values to labels
         investment_round_labels = {
-            1: 'Seed',
-            2: 'Series A',
-            3: 'Series B',
-            4: 'Series C',
-            5: 'Series D',
-            6: 'Series E',
-            7: 'Series F',
-            8: 'Series G/H'
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+            6: 6,
+            7: 7,
+            8: 8
         }
 
-        # Slider for Investment Round (labeled A to H)
-        investment_round_value = st.slider("Investment Round", min_value=1, max_value=8, value=1,format_func=lambda x: investment_round_labels[x])
+        investment_round_value = st.slider("Investment Round", min_value=1, max_value=8, value=1)
 
         # Display the selected investment round label
-        investment_round_label = investment_round_value
+        investment_round_label = investment_round_labels[investment_round_value]
         st.write("Investment Round:", investment_round_label)
 
         list_of_round_dates = []
@@ -394,6 +393,8 @@ elif selected == "Forecast Input":
             else:
                 list_of_round_dates.append(round_date)
                 list_of_round_funds.append(round_money)
+
+
 
                 # Collect API input
         api_input = {
