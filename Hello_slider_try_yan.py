@@ -63,7 +63,7 @@ def plot_analytics(time_data,raised_data):
     #ax.set_label('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round',fontsize=16)
 
     # Set the title
-    ax.set_title('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round', fontsize=16)
+    ax.set_title('Cummulative Funds raised by Acquired Startup (USD) at each round', fontsize=16)
     # Add a legend
 
     # Show the plot
@@ -111,9 +111,9 @@ elif selected == "Prediction Input":
                     url = st.secrets.google_api.key
                     response = requests.get(url, params=preproc_input(result)).json()['value'][0]
                     if response == 1:
-                        st.success("The status is as of 2014 still operational. However, we think it will be a SUCCESS! For better reference, look at the mean amount of funds for successful projects from your industry.")
+                        st.success(f"The status is as of 2014 still operational. The number of funding rounds was {int(result['funding_rounds'])}. The total amount of funds raised was {int(result['funding_total_usd'])} USD. However, we think it will be a SUCCESS! For better reference, look at the mean amount of funds for successful projects from your industry.")
                     elif response == 0:
-                        st.error("The status is still operational as of 2014. However, we think it might be FAILING... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
+                        st.error(f"The status is still operational as of 2014. The number of funding rounds was {int(result['funding_rounds'])}. The total amount of funds raised was {int(result['funding_total_usd'])} USD. However, we think it might be FAILING... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
                     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
                     analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
                     df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
@@ -425,7 +425,7 @@ elif selected == "Forecast Input":
             #st.success(prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['date'])
             #st.success(list_of_results)
             #st.success(list_days_till_forecast)
-            #print(prediction_interp(list_of_round_dates, list_of_round_funds, api_input))
+            print(prediction_interp(list_of_round_dates, list_of_round_funds, api_input))
 
 
             first_success_index = list_of_results.index(1) if 1 in list_of_results else len(list_of_results)
@@ -435,7 +435,8 @@ elif selected == "Forecast Input":
             if first_success_index == len(list_of_results):
                 st.error("You should significantly increase the funds you receive in the following rounds. Look at the mean amount of funds for successful projects from your industry.")
             elif first_success_index != len(list_of_results):
-                st.success(f"You're on the right way. If all goes as before, you can become successful within {list_days_till_forecast[first_success_index]} days. For better reference, look at the mean amount of funds for successful projects from your industry.")
+                st.success(f"You're on the right way. If all goes as before, you can become successful within {list_days_till_forecast[first_success_index]} days, {first_success_index+1} extra funding rounds, {int(prediction_interp(list_of_round_dates, list_of_round_funds, api_input)['funding_total_usd'][first_success_index] - sum(list_of_round_funds))} USD total extra funds. For better reference, look at the mean amount of funds for successful projects from your industry.")
+
 
             dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
             analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
