@@ -53,17 +53,15 @@ def plot_analytics(time_data,raised_data):
     ax.set_yticklabels(rounds, fontsize=16);
 
     # Set the x-axis label
-    ax.set_xlabel('Years lived by Startup at of each round', fontsize=16)
+    ax.set_xlabel('Age of startup at each round', fontsize=16)
 
     # Create a second y-axis for raised amount data
     ax2 = ax.twiny()
     ax2.scatter(raised_data.values, range(len(raised_data)), color='red', marker='o',s=100)
 
-    # Set the y-axis label for the second y-axis
-    #ax.set_label('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round',fontsize=16)
 
     # Set the title
-    ax.set_title('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round', fontsize=16)
+    ax.set_title('Total funds raised by acquired startups at each round (USD)', fontsize=16)
     # Add a legend
 
     # Show the plot
@@ -84,11 +82,11 @@ if selected == "Home":
 elif selected == "Prediction Input":
     #st.title(f"You are now on {selected}")
     #search_query = st.text_input("Search for a company")
-    search_query = st.selectbox("Select Company", list_of_names)
+    search_query = st.selectbox("Select company", list_of_names)
     # Button to trigger API request
     api_company_url = st.secrets.google_name.key_search
 
-    if st.button("Submit company name"):
+    if st.button("Submit"):
         if search_query:
             try:
                 # Send the search_query to your API
@@ -100,9 +98,9 @@ elif selected == "Prediction Input":
                 #print(result)
 
                 if (result['status'] == 'acquired'):
-                    st.success("The status of the company is acquired, so it can be considered successful!")
+                    st.success("The company has been acquired, so we consider it successful!")
                 elif (result['status'] == 'closed'):
-                    st.error("The status of the company is closed. Unfortunately, it failed...")
+                    st.error("The company is closed. Unfortunately, it failed...")
                 elif (result['status'] == 'operating'):
                     del result['name']
                     del result['status']
@@ -111,9 +109,9 @@ elif selected == "Prediction Input":
                     url = st.secrets.google_api.key
                     response = requests.get(url, params=preproc_input(result)).json()['value'][0]
                     if response == 1:
-                        st.success("The status is as of 2014 still operational. However, we think it will be a SUCCESS! For better reference, look at the mean amount of funds for successful projects from your industry.")
+                        st.success("As of 2014, the company is still operational. However, we think it will be SUCCESSFUL! Below are the funds raised by successful projects from your industry")
                     elif response == 0:
-                        st.error("The status is still operational as of 2014. However, we think it might be FAILING... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
+                        st.error("As of 2014, the company is still operational. However, we think it might be FAILING... Experiment with our forecasting guide to predict your success. Below are the funds raised by successful projects from your industry")
                     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
                     analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
                     df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
@@ -365,21 +363,21 @@ elif selected == "Forecast Input":
 
         # Mapping of slider values to labels
         investment_round_labels = {
-            1: 1,
-            2: 2,
-            3: 3,
-            4: 4,
-            5: 5,
-            6: 6,
-            7: 7,
-            8: 8
+            1: 'Seed',
+            2: 'Series A',
+            3: 'Series B',
+            4: 'Series C',
+            5: 'Series D',
+            6: 'Series E',
+            7: 'Series F',
+            8: 'Series G/H'
         }
 
         # Slider for Investment Round (labeled A to H)
-        investment_round_value = st.slider("Investment Round", min_value=1, max_value=8, value=1)
+        investment_round_value = st.slider("Investment Round", min_value=1, max_value=8, value=1,format_func=lambda x: investment_round_labels[x])
 
         # Display the selected investment round label
-        investment_round_label = investment_round_labels[investment_round_value]
+        investment_round_label = investment_round_value
         st.write("Investment Round:", investment_round_label)
 
         list_of_round_dates = []
