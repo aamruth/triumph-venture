@@ -53,7 +53,7 @@ def plot_analytics(time_data,raised_data):
     ax.set_yticklabels(rounds, fontsize=16);
 
     # Set the x-axis label
-    ax.set_xlabel('Years lived by Startup at of each round', fontsize=16)
+    ax.set_xlabel('Years in business', fontsize=16)
 
     # Create a second y-axis for raised amount data
     ax2 = ax.twiny()
@@ -63,7 +63,7 @@ def plot_analytics(time_data,raised_data):
     #ax.set_label('Cummulative Funds raised by Acquired Startup(100 Mil USD) at each round',fontsize=16)
 
     # Set the title
-    ax.set_title('Cummulative Funds raised by Acquired Startup (USD) at each round', fontsize=16)
+    ax.set_title('Cumulative funds raised by acquired startups at each round (USD)', fontsize=16)
     # Add a legend
 
     # Show the plot
@@ -111,9 +111,9 @@ elif selected == "Prediction Input":
                     url = st.secrets.google_api.key
                     response = requests.get(url, params=preproc_input(result)).json()['value'][0]
                     if response == 1:
-                        st.success(f"The status is as of 2014 still operational. The number of funding rounds was {int(result['funding_rounds'])}. The total amount of funds raised was {int(result['funding_total_usd'])} USD. However, we think it will be a SUCCESS! For better reference, look at the mean amount of funds for successful projects from your industry.")
+                        st.success(f"As of 2014 the status of the company is still operational. The number of funding rounds was {int(result['funding_rounds'])}. The total amount of funds raised was {int(result['funding_total_usd'])} USD. However, we think it will be a SUCCESS! For better reference, look at the mean amount of funds for successful projects from your industry.")
                     elif response == 0:
-                        st.error(f"The status is still operational as of 2014. The number of funding rounds was {int(result['funding_rounds'])}. The total amount of funds raised was {int(result['funding_total_usd'])} USD. However, we think it might be FAILING... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
+                        st.error(f"As of 2014 the status of the company is still operational. The number of funding rounds was {int(result['funding_rounds'])}. The total amount of funds raised was {int(result['funding_total_usd'])} USD. However, we think it might be FAILING... Try our forecasting feature to predict future success. Look at the mean amount of funds for successful projects from your industry.")
                     dir_name_streamlit = os.path.dirname(os.path.abspath(__file__))
                     analytics_data_csv = os.path.join(dir_name_streamlit,'data','02_data.csv')
                     df1 = pd.read_csv(analytics_data_csv, encoding='latin1')
